@@ -4498,8 +4498,6 @@ fragment PhaseMetadata on PhaseMetadata {
 }
 `
 
-// Header, fights and phases in a single request. The API charges the fight load
-// once, so all three cost no more than fetching the fights alone.
 func getReportWithFights(
 	ctx_ context.Context,
 	client_ graphql.Client,
