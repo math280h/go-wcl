@@ -3,6 +3,8 @@ package warcraftlogs
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"iter"
 )
 
 // CharacterRef identifies a character by ID, or by name plus server slug and
@@ -179,6 +181,57 @@ func (c *Client) ReportEvents(ctx context.Context, dataType EventDataType, p Rep
 	}
 	events := report.Events
 	return EventPage{Data: events.Data, NextPageTimestamp: events.NextPageTimestamp}, nil
+}
+
+// ReportEventsAll iterates every event matching p, following
+// [EventPage.NextPageTimestamp] across pages and yielding one event at a time.
+// Events arrive as raw JSON objects for the caller to decode.
+//
+// Iteration stops at the first error, which is yielded with a nil event. Stop
+// early by breaking out of the range loop; no further requests are made.
+//
+//	for e, err := range client.ReportEventsAll(ctx, dataType, params) {
+//		if err != nil {
+//			return err
+//		}
+//		// ... decode e ...
+//	}
+//
+// Like [Client.ReportEvents], this requires either FightIDs or an explicit
+// StartTime and EndTime range. It does not modify p.
+func (c *Client) ReportEventsAll(ctx context.Context, dataType EventDataType, p ReportEventsParams) iter.Seq2[json.RawMessage, error] {
+	return func(yield func(json.RawMessage, error) bool) {
+		for {
+			page, err := c.ReportEvents(ctx, dataType, p)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+
+			var events []json.RawMessage
+			if len(page.Data) > 0 {
+				if err := json.Unmarshal(page.Data, &events); err != nil {
+					yield(nil, fmt.Errorf("warcraftlogs: decoding events at %v: %w", p.StartTime, err))
+					return
+				}
+			}
+			for _, e := range events {
+				if !yield(e, nil) {
+					return
+				}
+			}
+
+			if page.NextPageTimestamp == 0 {
+				return
+			}
+			if page.NextPageTimestamp <= p.StartTime {
+				yield(nil, fmt.Errorf("%w: %v did not advance past %v",
+					ErrPageNotAdvancing, page.NextPageTimestamp, p.StartTime))
+				return
+			}
+			p.StartTime = page.NextPageTimestamp
+		}
+	}
 }
 
 // ReportRankingsParams filters the [Client.ReportRankings] query. Code is

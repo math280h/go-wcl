@@ -252,6 +252,17 @@ fragment ReportFight on ReportFight {
   }
 }
 
+fragment ReportActor on ReportActor {
+  gameID
+  id
+  name
+  type
+  subType
+  icon
+  petOwner
+  server
+}
+
 fragment ReportMasterData on ReportMasterData {
   logVersion
   gameVersion
@@ -262,15 +273,9 @@ fragment ReportMasterData on ReportMasterData {
     name
     type
   }
+  # @genqlient(flatten: true)
   actors {
-    gameID
-    id
-    name
-    type
-    subType
-    icon
-    petOwner
-    server
+    ...ReportActor
   }
 }
 

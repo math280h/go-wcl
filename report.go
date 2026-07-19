@@ -84,6 +84,42 @@ func (f *ReportFight) PhaseAt(t float64) (PhaseTransition, bool) {
 	return cur, found
 }
 
+// Actor types and sub-types accepted by [ReportActorsParams]. The API matches
+// these case-sensitively against its own actor classification.
+const (
+	ActorPlayer = "Player"
+	ActorNPC    = "NPC"
+	ActorPet    = "Pet"
+	ActorBoss   = "Boss"
+)
+
+// ReportActorsParams filters the actors returned by [Client.ReportActors]. Code
+// is required; other zero fields are omitted from the query. Type selects
+// players, NPCs or pets; SubType selects a player's class or an NPC's
+// classification.
+type ReportActorsParams struct {
+	Code      string
+	Type      string
+	SubType   string
+	Translate bool
+}
+
+// ReportActors returns a report's actors, filtered by type and sub-type. It is
+// the narrow form of [Client.ReportMasterData], which always returns every
+// actor alongside the full ability table. It returns [ErrNotFound] if no report
+// matches.
+func (c *Client) ReportActors(ctx context.Context, p ReportActorsParams) ([]ReportActor, error) {
+	resp, err := getReportActors(ctx, c.gql, p.Code, p.Type, p.SubType, p.Translate)
+	if err != nil {
+		return nil, err
+	}
+	report, err := orNotFound(resp.ReportData.Report)
+	if err != nil {
+		return nil, err
+	}
+	return report.MasterData.Actors, nil
+}
+
 // ReportMasterData returns the actors and abilities referenced by a report. Set
 // translate to localize names to the request locale. It returns [ErrNotFound]
 // if no report matches.

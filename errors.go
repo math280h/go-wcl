@@ -18,6 +18,10 @@ var ErrNotFound = errors.New("warcraftlogs: not found")
 // rather than the API itself. Match it with [IsBlocked].
 var ErrBlocked = errors.New("warcraftlogs: blocked by CDN")
 
+// ErrPageNotAdvancing is returned by [Client.ReportEventsAll] when the API
+// hands back a next-page cursor that does not move forward.
+var ErrPageNotAdvancing = errors.New("warcraftlogs: pagination cursor did not advance")
+
 // CDNError is returned when the CDN answers with an HTML challenge or error
 // page instead of a GraphQL response. It unwraps to [ErrBlocked].
 type CDNError struct {

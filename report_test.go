@@ -1,6 +1,72 @@
 package warcraftlogs
 
-import "testing"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/Khan/genqlient/graphql"
+)
+
+func TestReportActorsSendsFilterAndUnwraps(t *testing.T) {
+	var vars map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Variables map[string]any `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Errorf("decoding request: %v", err)
+		}
+		vars = req.Variables
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"data":{"reportData":{"report":{"masterData":{"actors":[
+			{"id":1,"name":"Zesyis","type":"Player","subType":"DeathKnight"}]}}}}}`)
+	}))
+	defer srv.Close()
+	client := &Client{gql: graphql.NewClient(srv.URL, srv.Client()), endpoint: srv.URL}
+
+	actors, err := client.ReportActors(context.Background(), ReportActorsParams{
+		Code: "abc", Type: ActorPlayer, SubType: "DeathKnight",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(actors) != 1 || actors[0].Name != "Zesyis" {
+		t.Fatalf("actors = %+v", actors)
+	}
+	if vars["actorType"] != "Player" || vars["actorSubType"] != "DeathKnight" {
+		t.Errorf("variables = %v, want the filter passed through", vars)
+	}
+}
+
+// Zero-valued filters are omitted so the API returns every actor.
+func TestReportActorsOmitsEmptyFilter(t *testing.T) {
+	var vars map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		vars = req.Variables
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"data":{"reportData":{"report":{"masterData":{"actors":[]}}}}}`)
+	}))
+	defer srv.Close()
+	client := &Client{gql: graphql.NewClient(srv.URL, srv.Client()), endpoint: srv.URL}
+
+	if _, err := client.ReportActors(context.Background(), ReportActorsParams{Code: "abc"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := vars["actorType"]; ok {
+		t.Errorf("actorType was sent despite being empty: %v", vars)
+	}
+	if _, ok := vars["actorSubType"]; ok {
+		t.Errorf("actorSubType was sent despite being empty: %v", vars)
+	}
+}
 
 func TestPhaseAt(t *testing.T) {
 	// Deliberately unordered: the API does not promise sorted transitions.

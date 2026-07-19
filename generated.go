@@ -969,6 +969,53 @@ func (v *Report) GetRegion() ReportRegion { return v.Region }
 // GetArchiveStatus returns Report.ArchiveStatus, and is useful for accessing the field via an interface.
 func (v *Report) GetArchiveStatus() ReportArchiveStatus { return v.ArchiveStatus }
 
+// ReportActor includes the GraphQL fields of ReportActor requested by the fragment ReportActor.
+// The GraphQL type's documentation follows.
+//
+// The ReportActor represents a single player, pet or NPC that occurs in the report.
+type ReportActor struct {
+	// The game ID of the actor.
+	GameID float64 `json:"gameID"`
+	// The report ID of the actor. This ID is used in events to identify sources and targets.
+	Id int `json:"id"`
+	// The name of the actor.
+	Name string `json:"name"`
+	// The type of the actor, i.e., if it is a player, pet or NPC.
+	Type string `json:"type"`
+	// The sub-type of the actor, for players it's their class, and for NPCs, they are further subdivided into normal NPCs and bosses.
+	SubType string `json:"subType"`
+	// An icon to use for the actor. For pets and NPCs, this will be the icon the site chose to represent that actor.
+	Icon string `json:"icon"`
+	// The report ID of the actor's owner if the actor is a pet.
+	PetOwner int `json:"petOwner"`
+	// The normalized server name of the actor.
+	Server string `json:"server"`
+}
+
+// GetGameID returns ReportActor.GameID, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetGameID() float64 { return v.GameID }
+
+// GetId returns ReportActor.Id, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetId() int { return v.Id }
+
+// GetName returns ReportActor.Name, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetName() string { return v.Name }
+
+// GetType returns ReportActor.Type, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetType() string { return v.Type }
+
+// GetSubType returns ReportActor.SubType, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetSubType() string { return v.SubType }
+
+// GetIcon returns ReportActor.Icon, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetIcon() string { return v.Icon }
+
+// GetPetOwner returns ReportActor.PetOwner, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetPetOwner() int { return v.PetOwner }
+
+// GetServer returns ReportActor.Server, and is useful for accessing the field via an interface.
+func (v *ReportActor) GetServer() string { return v.Server }
+
 // ReportArchiveStatus includes the requested fields of the GraphQL type ReportArchiveStatus.
 // The GraphQL type's documentation follows.
 //
@@ -1157,7 +1204,7 @@ type ReportMasterData struct {
 	// A list of every ability that occurs in the report.
 	Abilities []ReportMasterDataAbilitiesReportAbility `json:"abilities"`
 	// A list of every actor (player, NPC, pet) that occurs in the report.
-	Actors []ReportMasterDataActorsReportActor `json:"actors"`
+	Actors []ReportActor `json:"actors"`
 }
 
 // GetLogVersion returns ReportMasterData.LogVersion, and is useful for accessing the field via an interface.
@@ -1175,7 +1222,7 @@ func (v *ReportMasterData) GetAbilities() []ReportMasterDataAbilitiesReportAbili
 }
 
 // GetActors returns ReportMasterData.Actors, and is useful for accessing the field via an interface.
-func (v *ReportMasterData) GetActors() []ReportMasterDataActorsReportActor { return v.Actors }
+func (v *ReportMasterData) GetActors() []ReportActor { return v.Actors }
 
 // ReportMasterDataAbilitiesReportAbility includes the requested fields of the GraphQL type ReportAbility.
 // The GraphQL type's documentation follows.
@@ -1203,53 +1250,6 @@ func (v *ReportMasterDataAbilitiesReportAbility) GetName() string { return v.Nam
 
 // GetType returns ReportMasterDataAbilitiesReportAbility.Type, and is useful for accessing the field via an interface.
 func (v *ReportMasterDataAbilitiesReportAbility) GetType() string { return v.Type }
-
-// ReportMasterDataActorsReportActor includes the requested fields of the GraphQL type ReportActor.
-// The GraphQL type's documentation follows.
-//
-// The ReportActor represents a single player, pet or NPC that occurs in the report.
-type ReportMasterDataActorsReportActor struct {
-	// The game ID of the actor.
-	GameID float64 `json:"gameID"`
-	// The report ID of the actor. This ID is used in events to identify sources and targets.
-	Id int `json:"id"`
-	// The name of the actor.
-	Name string `json:"name"`
-	// The type of the actor, i.e., if it is a player, pet or NPC.
-	Type string `json:"type"`
-	// The sub-type of the actor, for players it's their class, and for NPCs, they are further subdivided into normal NPCs and bosses.
-	SubType string `json:"subType"`
-	// An icon to use for the actor. For pets and NPCs, this will be the icon the site chose to represent that actor.
-	Icon string `json:"icon"`
-	// The report ID of the actor's owner if the actor is a pet.
-	PetOwner int `json:"petOwner"`
-	// The normalized server name of the actor.
-	Server string `json:"server"`
-}
-
-// GetGameID returns ReportMasterDataActorsReportActor.GameID, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetGameID() float64 { return v.GameID }
-
-// GetId returns ReportMasterDataActorsReportActor.Id, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetId() int { return v.Id }
-
-// GetName returns ReportMasterDataActorsReportActor.Name, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetName() string { return v.Name }
-
-// GetType returns ReportMasterDataActorsReportActor.Type, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetType() string { return v.Type }
-
-// GetSubType returns ReportMasterDataActorsReportActor.SubType, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetSubType() string { return v.SubType }
-
-// GetIcon returns ReportMasterDataActorsReportActor.Icon, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetIcon() string { return v.Icon }
-
-// GetPetOwner returns ReportMasterDataActorsReportActor.PetOwner, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetPetOwner() int { return v.PetOwner }
-
-// GetServer returns ReportMasterDataActorsReportActor.Server, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataActorsReportActor) GetServer() string { return v.Server }
 
 // All the possible metrics.
 type ReportRankingMetricType string
@@ -1872,6 +1872,26 @@ type __getNPCInput struct {
 
 // GetId returns __getNPCInput.Id, and is useful for accessing the field via an interface.
 func (v *__getNPCInput) GetId() int { return v.Id }
+
+// __getReportActorsInput is used internally by genqlient
+type __getReportActorsInput struct {
+	Code         string `json:"code,omitempty"`
+	ActorType    string `json:"actorType,omitempty"`
+	ActorSubType string `json:"actorSubType,omitempty"`
+	Translate    bool   `json:"translate"`
+}
+
+// GetCode returns __getReportActorsInput.Code, and is useful for accessing the field via an interface.
+func (v *__getReportActorsInput) GetCode() string { return v.Code }
+
+// GetActorType returns __getReportActorsInput.ActorType, and is useful for accessing the field via an interface.
+func (v *__getReportActorsInput) GetActorType() string { return v.ActorType }
+
+// GetActorSubType returns __getReportActorsInput.ActorSubType, and is useful for accessing the field via an interface.
+func (v *__getReportActorsInput) GetActorSubType() string { return v.ActorSubType }
+
+// GetTranslate returns __getReportActorsInput.Translate, and is useful for accessing the field via an interface.
+func (v *__getReportActorsInput) GetTranslate() bool { return v.Translate }
 
 // __getReportEventsInput is used internally by genqlient
 type __getReportEventsInput struct {
@@ -2592,6 +2612,53 @@ type getRegionsWorldData struct {
 
 // GetRegions returns getRegionsWorldData.Regions, and is useful for accessing the field via an interface.
 func (v *getRegionsWorldData) GetRegions() []Region { return v.Regions }
+
+// getReportActorsReportData includes the requested fields of the GraphQL type ReportData.
+// The GraphQL type's documentation follows.
+//
+// The ReportData object enables the retrieval of single reports or filtered collections of reports.
+type getReportActorsReportData struct {
+	// Obtain a specific report by its code.
+	Report *getReportActorsReportDataReport `json:"report"`
+}
+
+// GetReport returns getReportActorsReportData.Report, and is useful for accessing the field via an interface.
+func (v *getReportActorsReportData) GetReport() *getReportActorsReportDataReport { return v.Report }
+
+// getReportActorsReportDataReport includes the requested fields of the GraphQL type Report.
+// The GraphQL type's documentation follows.
+//
+// A single report uploaded by a player to a guild or personal logs.
+type getReportActorsReportDataReport struct {
+	// Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report.
+	MasterData getReportActorsReportDataReportMasterData `json:"masterData"`
+}
+
+// GetMasterData returns getReportActorsReportDataReport.MasterData, and is useful for accessing the field via an interface.
+func (v *getReportActorsReportDataReport) GetMasterData() getReportActorsReportDataReportMasterData {
+	return v.MasterData
+}
+
+// getReportActorsReportDataReportMasterData includes the requested fields of the GraphQL type ReportMasterData.
+// The GraphQL type's documentation follows.
+//
+// The ReporMastertData object contains information about the log version of a report, as well as the actors and abilities used in the report.
+type getReportActorsReportDataReportMasterData struct {
+	// A list of every actor (player, NPC, pet) that occurs in the report.
+	Actors []ReportActor `json:"actors"`
+}
+
+// GetActors returns getReportActorsReportDataReportMasterData.Actors, and is useful for accessing the field via an interface.
+func (v *getReportActorsReportDataReportMasterData) GetActors() []ReportActor { return v.Actors }
+
+// getReportActorsResponse is returned by getReportActors on success.
+type getReportActorsResponse struct {
+	// Obtain the report data object that allows the retrieval of individual reports or filtered collections of reports by guild or by user.
+	ReportData getReportActorsReportData `json:"reportData"`
+}
+
+// GetReportData returns getReportActorsResponse.ReportData, and is useful for accessing the field via an interface.
+func (v *getReportActorsResponse) GetReportData() getReportActorsReportData { return v.ReportData }
 
 // getReportEventsReportData includes the requested fields of the GraphQL type ReportData.
 // The GraphQL type's documentation follows.
@@ -4040,6 +4107,62 @@ func getReport(
 	return data_, err_
 }
 
+// The query executed by getReportActors.
+const getReportActors_Operation = `
+query getReportActors ($code: String!, $actorType: String, $actorSubType: String, $translate: Boolean) {
+	reportData {
+		report(code: $code) {
+			masterData(translate: $translate) {
+				actors(type: $actorType, subType: $actorSubType) {
+					... ReportActor
+				}
+			}
+		}
+	}
+}
+fragment ReportActor on ReportActor {
+	gameID
+	id
+	name
+	type
+	subType
+	icon
+	petOwner
+	server
+}
+`
+
+func getReportActors(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	code string,
+	actorType string,
+	actorSubType string,
+	translate bool,
+) (data_ *getReportActorsResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "getReportActors",
+		Query:  getReportActors_Operation,
+		Variables: &__getReportActorsInput{
+			Code:         code,
+			ActorType:    actorType,
+			ActorSubType: actorSubType,
+			Translate:    translate,
+		},
+	}
+
+	data_ = &getReportActorsResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
 // The query executed by getReportEvents.
 const getReportEvents_Operation = `
 query getReportEvents ($code: String!, $dataType: EventDataType, $startTime: Float, $endTime: Float, $fightIDs: [Int], $encounterID: Int, $difficulty: Int, $killType: KillType, $hostilityType: HostilityType, $sourceID: Int, $targetID: Int, $abilityID: Float, $filterExpression: String, $includeResources: Boolean, $limit: Int) {
@@ -4191,15 +4314,18 @@ fragment ReportMasterData on ReportMasterData {
 		type
 	}
 	actors {
-		gameID
-		id
-		name
-		type
-		subType
-		icon
-		petOwner
-		server
+		... ReportActor
 	}
+}
+fragment ReportActor on ReportActor {
+	gameID
+	id
+	name
+	type
+	subType
+	icon
+	petOwner
+	server
 }
 `
 
