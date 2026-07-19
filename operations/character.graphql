@@ -1,0 +1,17 @@
+query getCharacterByID($id: Int!) {
+  characterData {
+    # @genqlient(flatten: true, pointer: true)
+    character(id: $id) {
+      ...Character
+    }
+  }
+}
+
+query getCharacterByName($name: String!, $serverSlug: String!, $serverRegion: String!) {
+  characterData {
+    # @genqlient(flatten: true, pointer: true)
+    character(name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
+      ...Character
+    }
+  }
+}

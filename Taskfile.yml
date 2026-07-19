@@ -1,0 +1,77 @@
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  default:
+    desc: List available tasks.
+    cmds:
+      - task --list
+    silent: true
+
+  build:
+    desc: Build all packages.
+    cmds:
+      - go build ./...
+      - go -C tools build ./...
+
+  vet:
+    desc: Run go vet on both modules.
+    cmds:
+      - go vet ./...
+      - go -C tools vet ./...
+
+  fmt:
+    desc: Format all Go files.
+    cmds:
+      - gofmt -w .
+
+  fmt:check:
+    desc: Fail if any Go file is not formatted.
+    preconditions:
+      - sh: test -z "$(gofmt -l .)"
+        msg: 'unformatted files found; run "task fmt"'
+
+  tidy:
+    desc: Tidy module dependencies (main and tools).
+    cmds:
+      - go mod tidy
+      - go -C tools mod tidy
+
+  test:
+    desc: Run unit tests.
+    cmds:
+      - go test ./...
+
+  test:integration:
+    desc: Run integration tests against the live API.
+    requires:
+      vars: [WCL_CLIENT_ID, WCL_CLIENT_SECRET]
+    cmds:
+      - go test -tags integration ./...
+
+  schema:
+    desc: Introspect and update schema/schema.graphql from the live API.
+    requires:
+      vars: [WCL_CLIENT_ID, WCL_CLIENT_SECRET]
+    cmds:
+      - go -C tools run ./introspect
+
+  generate:
+    desc: Regenerate the typed client from operations and schema.
+    cmds:
+      - go generate ./...
+
+  regenerate:
+    desc: Refresh the schema, then regenerate the typed client.
+    cmds:
+      - task: schema
+      - task: generate
+
+  check:
+    desc: Run formatting checks, vet, build, and unit tests.
+    cmds:
+      - task: fmt:check
+      - task: vet
+      - task: build
+      - task: test

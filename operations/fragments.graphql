@@ -1,0 +1,236 @@
+fragment Faction on GameFaction {
+  id
+  name
+}
+
+fragment RegionSummary on Region {
+  id
+  name
+  slug
+  compactName
+}
+
+fragment Server on Server {
+  id
+  name
+  normalizedName
+  slug
+  blizzardID
+  connectedRealmID
+  # @genqlient(flatten: true)
+  region {
+    ...RegionSummary
+  }
+}
+
+fragment Character on Character {
+  id
+  canonicalID
+  name
+  classID
+  level
+  hidden
+  guildRank
+  # @genqlient(flatten: true)
+  faction {
+    ...Faction
+  }
+  # @genqlient(flatten: true)
+  server {
+    ...Server
+  }
+}
+
+fragment Guild on Guild {
+  id
+  name
+  description
+  competitionMode
+  stealthMode
+  type
+  # @genqlient(flatten: true)
+  faction {
+    ...Faction
+  }
+  # @genqlient(flatten: true)
+  server {
+    ...Server
+  }
+}
+
+fragment ZoneSummary on Zone {
+  id
+  name
+}
+
+fragment ExpansionSummary on Expansion {
+  id
+  name
+}
+
+fragment Zone on Zone {
+  id
+  name
+  frozen
+  # @genqlient(flatten: true)
+  expansion {
+    ...ExpansionSummary
+  }
+  difficulties {
+    id
+    name
+    sizes
+  }
+  encounters {
+    id
+    name
+  }
+  partitions {
+    id
+    name
+    compactName
+    default
+  }
+  brackets {
+    min
+    max
+    bucket
+    type
+  }
+}
+
+fragment Encounter on Encounter {
+  id
+  name
+  journalID
+  # @genqlient(flatten: true)
+  zone {
+    ...ZoneSummary
+  }
+}
+
+fragment Expansion on Expansion {
+  id
+  name
+  zones {
+    id
+    name
+  }
+}
+
+fragment Region on Region {
+  id
+  name
+  slug
+  compactName
+  subregions {
+    id
+    name
+  }
+}
+
+fragment User on User {
+  id
+  name
+}
+
+fragment CurrentUser on User {
+  id
+  name
+  avatar
+  battleTag
+}
+
+fragment GameZoneSummary on GameZone {
+  id
+  name
+}
+
+fragment Report on Report {
+  code
+  title
+  startTime
+  endTime
+  visibility
+  revision
+  segments
+  exportedSegments
+  # @genqlient(flatten: true)
+  zone {
+    ...ZoneSummary
+  }
+  guild {
+    id
+    name
+  }
+  # @genqlient(flatten: true)
+  owner {
+    ...User
+  }
+  region {
+    id
+    name
+  }
+  archiveStatus {
+    isArchived
+    isAccessible
+    archiveDate
+  }
+}
+
+fragment ReportFight on ReportFight {
+  id
+  name
+  encounterID
+  originalEncounterID
+  difficulty
+  size
+  kill
+  inProgress
+  completeRaid
+  startTime
+  endTime
+  fightPercentage
+  bossPercentage
+  averageItemLevel
+  friendlyPlayers
+  enemyPlayers
+  keystoneLevel
+  keystoneTime
+  keystoneBonus
+  keystoneAffixes
+  hardModeLevel
+  lastPhase
+  # @genqlient(flatten: true)
+  gameZone {
+    ...GameZoneSummary
+  }
+}
+
+fragment ReportMasterData on ReportMasterData {
+  logVersion
+  gameVersion
+  lang
+  abilities {
+    gameID
+    icon
+    name
+    type
+  }
+  actors {
+    gameID
+    id
+    name
+    type
+    subType
+    icon
+    petOwner
+    server
+  }
+}
+
+fragment RateLimit on RateLimitData {
+  limitPerHour
+  pointsSpentThisHour
+  pointsResetIn
+}

@@ -1,0 +1,67 @@
+fragment GameAbility on GameAbility {
+  id
+  icon
+  name
+}
+
+fragment GameItem on GameItem {
+  id
+  icon
+  name
+}
+
+fragment GameClass on GameClass {
+  id
+  name
+  slug
+  specs {
+    id
+    name
+    slug
+  }
+}
+
+fragment GameNPC on GameNPC {
+  id
+  name
+}
+
+query getAbility($id: Int!) {
+  gameData {
+    # @genqlient(flatten: true, pointer: true)
+    ability(id: $id) {
+      ...GameAbility
+    }
+  }
+}
+
+query getItem($id: Int!) {
+  gameData {
+    # @genqlient(flatten: true, pointer: true)
+    item(id: $id) {
+      ...GameItem
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getClasses(
+  $factionID: Int
+  $zoneID: Int
+) {
+  gameData {
+    # @genqlient(flatten: true)
+    classes(faction_id: $factionID, zone_id: $zoneID) {
+      ...GameClass
+    }
+  }
+}
+
+query getNPC($id: Int!) {
+  gameData {
+    # @genqlient(flatten: true, pointer: true)
+    npc(id: $id) {
+      ...GameNPC
+    }
+  }
+}

@@ -1,0 +1,17 @@
+query getGuildByID($id: Int!) {
+  guildData {
+    # @genqlient(flatten: true, pointer: true)
+    guild(id: $id) {
+      ...Guild
+    }
+  }
+}
+
+query getGuildByName($name: String!, $serverSlug: String!, $serverRegion: String!) {
+  guildData {
+    # @genqlient(flatten: true, pointer: true)
+    guild(name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
+      ...Guild
+    }
+  }
+}

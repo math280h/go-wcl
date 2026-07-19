@@ -1,0 +1,17 @@
+query getCurrentUser {
+  userData {
+    # @genqlient(flatten: true, pointer: true)
+    currentUser {
+      ...CurrentUser
+    }
+  }
+}
+
+query getUser($id: Int!) {
+  userData {
+    # @genqlient(flatten: true, pointer: true)
+    user(id: $id) {
+      ...User
+    }
+  }
+}

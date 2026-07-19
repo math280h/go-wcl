@@ -1,0 +1,6 @@
+query getRateLimit {
+  # @genqlient(flatten: true)
+  rateLimitData {
+    ...RateLimit
+  }
+}

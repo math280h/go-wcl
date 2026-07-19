@@ -1,0 +1,74 @@
+# @genqlient(omitempty: true)
+query getZones(
+  $expansionID: Int
+) {
+  worldData {
+    # @genqlient(flatten: true)
+    zones(expansion_id: $expansionID) {
+      ...Zone
+    }
+  }
+}
+
+query getZone($id: Int!) {
+  worldData {
+    # @genqlient(flatten: true, pointer: true)
+    zone(id: $id) {
+      ...Zone
+    }
+  }
+}
+
+query getEncounter($id: Int!) {
+  worldData {
+    # @genqlient(flatten: true, pointer: true)
+    encounter(id: $id) {
+      ...Encounter
+    }
+  }
+}
+
+query getExpansions {
+  worldData {
+    # @genqlient(flatten: true)
+    expansions {
+      ...Expansion
+    }
+  }
+}
+
+query getExpansion($id: Int!) {
+  worldData {
+    # @genqlient(flatten: true, pointer: true)
+    expansion(id: $id) {
+      ...Expansion
+    }
+  }
+}
+
+query getRegions {
+  worldData {
+    # @genqlient(flatten: true)
+    regions {
+      ...Region
+    }
+  }
+}
+
+query getServerByID($id: Int!) {
+  worldData {
+    # @genqlient(flatten: true, pointer: true)
+    server(id: $id) {
+      ...Server
+    }
+  }
+}
+
+query getServerBySlug($region: String!, $slug: String!) {
+  worldData {
+    # @genqlient(flatten: true, pointer: true)
+    server(region: $region, slug: $slug) {
+      ...Server
+    }
+  }
+}

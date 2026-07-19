@@ -1,0 +1,94 @@
+name: Schema
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    name: Refresh schema
+    runs-on: ubuntu-latest
+    environment: main
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+
+      - name: Check credentials
+        env:
+          WCL_CLIENT_ID: ${{ secrets.WCL_CLIENT_ID }}
+          WCL_CLIENT_SECRET: ${{ secrets.WCL_CLIENT_SECRET }}
+        run: |
+          if [ -z "$WCL_CLIENT_ID" ] || [ -z "$WCL_CLIENT_SECRET" ]; then
+            echo "::error::WCL_CLIENT_ID and WCL_CLIENT_SECRET must be set on this environment"
+            exit 1
+          fi
+
+      - name: Refresh schema
+        env:
+          WCL_CLIENT_ID: ${{ secrets.WCL_CLIENT_ID }}
+          WCL_CLIENT_SECRET: ${{ secrets.WCL_CLIENT_SECRET }}
+        run: go -C tools run ./introspect
+
+      - name: Regenerate
+        run: go generate ./...
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- schema/schema.graphql generated.go; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No schema changes."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'stat<<DIFFSTAT'
+              git diff --stat -- schema/schema.graphql generated.go
+              echo DIFFSTAT
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        id: build
+        if: steps.diff.outputs.changed == 'true'
+        continue-on-error: true
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./...
+
+      - name: Open or update pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          branch: automation/schema-refresh
+          delete-branch: true
+          add-paths: |
+            schema/schema.graphql
+            generated.go
+          commit-message: 'chore: refresh schema and regenerate client'
+          title: 'chore: refresh Warcraft Logs schema'
+          labels: automation
+          body: |
+            The Warcraft Logs schema changed. `schema/schema.graphql` was
+            re-introspected and `generated.go` regenerated.
+
+            Build and unit tests after regeneration: **${{ steps.build.outcome }}**
+
+            ```
+            ${{ steps.diff.outputs.stat }}
+            ```
+
+            Review the schema diff for removed or renamed fields before merging.
+            This branch is reused, so later runs update this pull request rather
+            than opening another.

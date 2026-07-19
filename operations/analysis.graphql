@@ -1,0 +1,256 @@
+# @genqlient(omitempty: true)
+query getCharacterZoneRankings(
+  $id: Int
+  $name: String
+  $serverSlug: String
+  $serverRegion: String
+  $zoneID: Int
+  $metric: CharacterPageRankingMetricType
+  $difficulty: Int
+  $partition: Int
+  $role: RoleType
+  $size: Int
+  $className: String
+  $specName: String
+  $byBracket: Boolean
+  $timeframe: RankingTimeframeType
+  $compare: RankingCompareType
+  $includePrivateLogs: Boolean
+) {
+  characterData {
+    # @genqlient(pointer: true)
+    character(id: $id, name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
+      zoneRankings(
+        zoneID: $zoneID
+        metric: $metric
+        difficulty: $difficulty
+        partition: $partition
+        role: $role
+        size: $size
+        className: $className
+        specName: $specName
+        byBracket: $byBracket
+        timeframe: $timeframe
+        compare: $compare
+        includePrivateLogs: $includePrivateLogs
+      )
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getCharacterEncounterRankings(
+  $id: Int
+  $name: String
+  $serverSlug: String
+  $serverRegion: String
+  $encounterID: Int
+  $metric: CharacterRankingMetricType
+  $difficulty: Int
+  $partition: Int
+  $role: RoleType
+  $size: Int
+  $className: String
+  $specName: String
+  $byBracket: Boolean
+  $timeframe: RankingTimeframeType
+  $compare: RankingCompareType
+  $includeCombatantInfo: Boolean
+) {
+  characterData {
+    # @genqlient(pointer: true)
+    character(id: $id, name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
+      encounterRankings(
+        encounterID: $encounterID
+        metric: $metric
+        difficulty: $difficulty
+        partition: $partition
+        role: $role
+        size: $size
+        className: $className
+        specName: $specName
+        byBracket: $byBracket
+        timeframe: $timeframe
+        compare: $compare
+        includeCombatantInfo: $includeCombatantInfo
+      )
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getReportTable(
+  $code: String!
+  $dataType: TableDataType
+  $startTime: Float
+  $endTime: Float
+  $fightIDs: [Int]
+  $encounterID: Int
+  $difficulty: Int
+  $killType: KillType
+  $hostilityType: HostilityType
+  $sourceID: Int
+  $targetID: Int
+  $abilityID: Float
+  $filterExpression: String
+  $viewBy: ViewType
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      table(
+        dataType: $dataType
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIDs
+        encounterID: $encounterID
+        difficulty: $difficulty
+        killType: $killType
+        hostilityType: $hostilityType
+        sourceID: $sourceID
+        targetID: $targetID
+        abilityID: $abilityID
+        filterExpression: $filterExpression
+        viewBy: $viewBy
+      )
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getReportGraph(
+  $code: String!
+  $dataType: GraphDataType
+  $startTime: Float
+  $endTime: Float
+  $fightIDs: [Int]
+  $encounterID: Int
+  $difficulty: Int
+  $killType: KillType
+  $hostilityType: HostilityType
+  $sourceID: Int
+  $targetID: Int
+  $abilityID: Float
+  $filterExpression: String
+  $viewBy: ViewType
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      graph(
+        dataType: $dataType
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIDs
+        encounterID: $encounterID
+        difficulty: $difficulty
+        killType: $killType
+        hostilityType: $hostilityType
+        sourceID: $sourceID
+        targetID: $targetID
+        abilityID: $abilityID
+        filterExpression: $filterExpression
+        viewBy: $viewBy
+      )
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getReportEvents(
+  $code: String!
+  $dataType: EventDataType
+  $startTime: Float
+  $endTime: Float
+  $fightIDs: [Int]
+  $encounterID: Int
+  $difficulty: Int
+  $killType: KillType
+  $hostilityType: HostilityType
+  $sourceID: Int
+  $targetID: Int
+  $abilityID: Float
+  $filterExpression: String
+  $includeResources: Boolean
+  $limit: Int
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      events(
+        dataType: $dataType
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIDs
+        encounterID: $encounterID
+        difficulty: $difficulty
+        killType: $killType
+        hostilityType: $hostilityType
+        sourceID: $sourceID
+        targetID: $targetID
+        abilityID: $abilityID
+        filterExpression: $filterExpression
+        includeResources: $includeResources
+        limit: $limit
+      ) {
+        data
+        nextPageTimestamp
+      }
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getReportRankings(
+  $code: String!
+  $encounterID: Int
+  $difficulty: Int
+  $fightIDs: [Int]
+  $playerMetric: ReportRankingMetricType
+  $compare: RankingCompareType
+  $timeframe: RankingTimeframeType
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      rankings(
+        encounterID: $encounterID
+        difficulty: $difficulty
+        fightIDs: $fightIDs
+        playerMetric: $playerMetric
+        compare: $compare
+        timeframe: $timeframe
+      )
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getReportPlayerDetails(
+  $code: String!
+  $startTime: Float
+  $endTime: Float
+  $fightIDs: [Int]
+  $encounterID: Int
+  $difficulty: Int
+  $killType: KillType
+  $includeCombatantInfo: Boolean
+  # @genqlient(omitempty: false)
+  $translate: Boolean
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      playerDetails(
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIDs
+        encounterID: $encounterID
+        difficulty: $difficulty
+        killType: $killType
+        includeCombatantInfo: $includeCombatantInfo
+        translate: $translate
+      )
+    }
+  }
+}

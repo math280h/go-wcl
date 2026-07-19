@@ -1,0 +1,57 @@
+# @genqlient(omitempty: true)
+query getReport(
+  $code: String!
+  # @genqlient(omitempty: false)
+  $allowUnlisted: Boolean
+) {
+  reportData {
+    # @genqlient(flatten: true, pointer: true)
+    report(code: $code, allowUnlisted: $allowUnlisted) {
+      ...Report
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getReportFights(
+  $code: String!
+  $encounterID: Int
+  $difficulty: Int
+  $killType: KillType
+  $fightIDs: [Int]
+  # @genqlient(omitempty: false)
+  $translate: Boolean
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      # @genqlient(flatten: true)
+      fights(
+        encounterID: $encounterID
+        difficulty: $difficulty
+        killType: $killType
+        fightIDs: $fightIDs
+        translate: $translate
+      ) {
+        ...ReportFight
+      }
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
+query getReportMasterData(
+  $code: String!
+  # @genqlient(omitempty: false)
+  $translate: Boolean
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      # @genqlient(flatten: true)
+      masterData(translate: $translate) {
+        ...ReportMasterData
+      }
+    }
+  }
+}
