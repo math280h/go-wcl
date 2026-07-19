@@ -172,9 +172,134 @@ func TestRetryableStatus(t *testing.T) {
 		{http.StatusBadGateway, true},
 		{http.StatusServiceUnavailable, true},
 		{http.StatusGatewayTimeout, true},
+		{519, false},
+		{520, true}, // Cloudflare unknown error
+		{522, true}, // Cloudflare connection timed out
+		{527, true},
+		{528, false},
 	} {
 		if got := retryableStatus(tc.code); got != tc.want {
 			t.Errorf("retryableStatus(%d) = %v, want %v", tc.code, got, tc.want)
+		}
+	}
+}
+
+// htmlResp builds a Cloudflare-style interstitial.
+func htmlResp(code int, body string) *http.Response {
+	r := resp(code)
+	r.Header.Set("Content-Type", "text/html; charset=UTF-8")
+	r.Body = io.NopCloser(strings.NewReader(body))
+	return r
+}
+
+func TestRoundTripReportsCDNChallenge(t *testing.T) {
+	base := &stubRoundTripper{responses: []*http.Response{
+		htmlResp(http.StatusForbidden, "<html><head>\n<title>Just a moment...</title>\n</head></html>"),
+	}}
+	tr := &transport{base: base, maxRetries: 3}
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://example.com/api", nil)
+	got, err := tr.RoundTrip(req)
+	if got != nil {
+		t.Errorf("response = %v, want nil", got)
+	}
+	var ce *CDNError
+	if !errors.As(err, &ce) {
+		t.Fatalf("err = %v, want *CDNError", err)
+	}
+	if ce.StatusCode != http.StatusForbidden || ce.Title != "Just a moment..." {
+		t.Errorf("CDNError = %+v", ce)
+	}
+	if base.calls != 1 {
+		t.Errorf("calls = %d, want 1 (403 is not retryable)", base.calls)
+	}
+}
+
+// A challenge served as a retryable status is still classified once retries run out.
+func TestRoundTripReportsCDNChallengeAfterRetries(t *testing.T) {
+	base := &stubRoundTripper{responses: []*http.Response{
+		htmlResp(http.StatusServiceUnavailable, "<html><title>Attention Required!</title></html>"),
+		htmlResp(http.StatusServiceUnavailable, "<html><title>Attention Required!</title></html>"),
+	}}
+	tr := &transport{base: base, maxRetries: 1}
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://example.com/api", nil)
+	if _, err := tr.RoundTrip(req); !IsBlocked(err) {
+		t.Fatalf("err = %v, want ErrBlocked", err)
+	}
+	if base.calls != 2 {
+		t.Errorf("calls = %d, want 2", base.calls)
+	}
+}
+
+func TestRoundTripPassesJSONThrough(t *testing.T) {
+	ok := resp(http.StatusOK)
+	ok.Header.Set("Content-Type", "application/json")
+	base := &stubRoundTripper{responses: []*http.Response{ok}}
+	tr := &transport{base: base}
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://example.com/api", nil)
+	got, err := tr.RoundTrip(req)
+	if err != nil || got != ok {
+		t.Fatalf("got %v, %v, want the response unchanged", got, err)
+	}
+}
+
+// A GraphQL error body is JSON with a non-2xx status; it must not be mistaken
+// for a CDN block.
+func TestRoundTripDoesNotBlockOnJSONErrorBody(t *testing.T) {
+	bad := &http.Response{
+		StatusCode: http.StatusBadRequest,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(`{"errors":[{"message":"bad"}]}`)),
+	}
+	tr := &transport{base: &stubRoundTripper{responses: []*http.Response{bad}}}
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://example.com/api", nil)
+	got, err := tr.RoundTrip(req)
+	if err != nil || got != bad {
+		t.Fatalf("got %v, %v, want the response unchanged", got, err)
+	}
+}
+
+func TestRoundTripDetectsCFMitigatedHeader(t *testing.T) {
+	blocked := resp(http.StatusOK)
+	blocked.Header.Set("cf-mitigated", "challenge")
+	tr := &transport{base: &stubRoundTripper{responses: []*http.Response{blocked}}}
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://example.com/api", nil)
+	if _, err := tr.RoundTrip(req); !IsBlocked(err) {
+		t.Fatalf("err = %v, want ErrBlocked", err)
+	}
+}
+
+// cf-mitigated means Cloudflare acted on the request, so retrying an otherwise
+// retryable status cannot help.
+func TestRoundTripDoesNotRetryCFMitigated(t *testing.T) {
+	blocked := resp(http.StatusServiceUnavailable)
+	blocked.Header.Set("cf-mitigated", "challenge")
+	base := &stubRoundTripper{responses: []*http.Response{blocked}}
+	tr := &transport{base: base, maxRetries: 3}
+
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://example.com/api", nil)
+	if _, err := tr.RoundTrip(req); !IsBlocked(err) {
+		t.Fatalf("err = %v, want ErrBlocked", err)
+	}
+	if base.calls != 1 {
+		t.Errorf("calls = %d, want 1", base.calls)
+	}
+}
+
+func TestHTMLTitle(t *testing.T) {
+	for _, tc := range []struct{ body, want string }{
+		{"<html><title>Just a moment...</title></html>", "Just a moment..."},
+		{"<title class=\"x\">  Attention\n  Required  </title>", "Attention Required"},
+		{"<html><head></head></html>", ""},
+		{"<title>unterminated", ""},
+		{"", ""},
+	} {
+		if got := htmlTitle(tc.body); got != tc.want {
+			t.Errorf("htmlTitle(%q) = %q, want %q", tc.body, got, tc.want)
 		}
 	}
 }

@@ -13,21 +13,43 @@ func (c *Client) Report(ctx context.Context, code string, allowUnlisted bool) (*
 	return orNotFound(resp.ReportData.Report)
 }
 
-// ReportFightsParams filters the fights returned by [Client.ReportFights]. Code
-// is required; other zero fields are omitted from the query.
-type ReportFightsParams struct {
-	Code        string
-	EncounterID int
-	Difficulty  int
-	KillType    KillType
-	FightIDs    []int
-	Translate   bool
+// ReportWithFightsParams filters the fights returned by
+// [Client.ReportWithFights]. Code is required; other zero fields are omitted
+// from the query.
+type ReportWithFightsParams struct {
+	Code          string
+	AllowUnlisted bool
+	EncounterID   int
+	Difficulty    int
+	KillType      KillType
+	FightIDs      []int
+	Translate     bool
 }
 
-// ReportFights returns the fights of a report. It returns [ErrNotFound] if no
-// report matches.
-func (c *Client) ReportFights(ctx context.Context, p ReportFightsParams) ([]ReportFight, error) {
-	resp, err := getReportFights(ctx, c.gql, p.Code, p.EncounterID, p.Difficulty, p.KillType, p.FightIDs, p.Translate)
+// ReportWithFights is a report header together with its fights and the phase
+// metadata of every boss encounter the report observed.
+type ReportWithFights struct {
+	Report
+	Fights []ReportFight
+	Phases []EncounterPhases
+}
+
+// PhasesFor returns the phase metadata for an encounter, or nil if the report
+// carries none. [PhaseMetadata.Id] lines up with [PhaseTransition.Id].
+func (r *ReportWithFights) PhasesFor(encounterID int) []PhaseMetadata {
+	for _, ep := range r.Phases {
+		if ep.EncounterID == encounterID {
+			return ep.Phases
+		}
+	}
+	return nil
+}
+
+// ReportWithFights returns a report's header, fights and encounter phases in a
+// single request. Use [Client.Report] when the header is all you need. It
+// returns [ErrNotFound] if no report matches.
+func (c *Client) ReportWithFights(ctx context.Context, p ReportWithFightsParams) (*ReportWithFights, error) {
+	resp, err := getReportWithFights(ctx, c.gql, p.Code, p.AllowUnlisted, p.EncounterID, p.Difficulty, p.KillType, p.FightIDs, p.Translate)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +57,31 @@ func (c *Client) ReportFights(ctx context.Context, p ReportFightsParams) ([]Repo
 	if err != nil {
 		return nil, err
 	}
-	return report.Fights, nil
+	return &ReportWithFights{
+		Report: report.Report,
+		Fights: report.Fights,
+		Phases: report.Phases,
+	}, nil
+}
+
+// PhaseAt returns the phase the fight was in at report-relative timestamp t,
+// and whether one was found. It reports false for a timestamp before the first
+// transition, and for fights with no phase data. Join [PhaseTransition.Id]
+// against [ReportWithFights.PhasesFor] to resolve the name.
+//
+// Prefer this to [ReportFight.LastPhase], which numbers normal phases and
+// intermissions separately and so only resolves alongside
+// LastPhaseIsIntermission. A fight may also re-enter a phase it has already
+// been in.
+func (f *ReportFight) PhaseAt(t float64) (PhaseTransition, bool) {
+	var cur PhaseTransition
+	var found bool
+	for _, pt := range f.PhaseTransitions {
+		if pt.StartTime <= t && (!found || pt.StartTime > cur.StartTime) {
+			cur, found = pt, true
+		}
+	}
+	return cur, found
 }
 
 // ReportMasterData returns the actors and abilities referenced by a report. Set

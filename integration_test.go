@@ -92,7 +92,7 @@ func TestCharacterRankingsNotFound(t *testing.T) {
 
 func TestReportNotFound(t *testing.T) {
 	client := newTestClient(t)
-	_, err := client.ReportFights(context.Background(), warcraftlogs.ReportFightsParams{Code: "zzzzzzzzzzzzzzzz"})
+	_, err := client.ReportWithFights(context.Background(), warcraftlogs.ReportWithFightsParams{Code: "zzzzzzzzzzzzzzzz"})
 	if err == nil {
 		t.Fatal("expected an error for a nonexistent report code")
 	}
