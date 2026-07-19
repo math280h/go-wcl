@@ -97,19 +97,15 @@ func allDeaths(ctx context.Context, client *warcraftlogs.Client, code string, fi
 		FightIDs: fightIDs,
 	}
 	var all []deathEvent
-	for {
-		page, err := client.ReportEvents(ctx, warcraftlogs.EventDataTypeDeaths, params)
+	for raw, err := range client.ReportEventsAll(ctx, warcraftlogs.EventDataTypeDeaths, params) {
 		if err != nil {
 			return nil, err
 		}
-		var batch []deathEvent
-		if err := json.Unmarshal(page.Data, &batch); err != nil {
-			return nil, fmt.Errorf("decode death events: %w", err)
+		var e deathEvent
+		if err := json.Unmarshal(raw, &e); err != nil {
+			return nil, fmt.Errorf("decode death event: %w", err)
 		}
-		all = append(all, batch...)
-		if page.NextPageTimestamp == 0 {
-			return all, nil
-		}
-		params.StartTime = page.NextPageTimestamp
+		all = append(all, e)
 	}
+	return all, nil
 }

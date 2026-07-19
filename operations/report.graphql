@@ -62,3 +62,24 @@ query getReportMasterData(
     }
   }
 }
+
+# @genqlient(omitempty: true)
+query getReportActors(
+  $code: String!
+  $actorType: String
+  $actorSubType: String
+  # @genqlient(omitempty: false)
+  $translate: Boolean
+) {
+  reportData {
+    # @genqlient(pointer: true)
+    report(code: $code) {
+      masterData(translate: $translate) {
+        # @genqlient(flatten: true)
+        actors(type: $actorType, subType: $actorSubType) {
+          ...ReportActor
+        }
+      }
+    }
+  }
+}

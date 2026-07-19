@@ -182,6 +182,22 @@ Prefer `PhaseTransitions` over the `LastPhase*` fields: a fight can re-enter a
 phase it has already been in, and `LastPhase` numbers normal phases and
 intermissions separately.
 
+### Actors
+
+`ReportMasterData` returns every actor in a report alongside the full ability
+table. When you only need actors — a roster, a player picker, attendance —
+`ReportActors` filters server-side:
+
+```go
+players, err := client.ReportActors(ctx, warcraftlogs.ReportActorsParams{
+	Code: "aBcDeFgHiJkLmN01",
+	Type: warcraftlogs.ActorPlayer,
+})
+```
+
+`SubType` narrows further: a class for players (`"DeathKnight"`), or
+`ActorBoss` for NPCs. Leaving a field empty omits that filter.
+
 ### Analysis endpoints
 
 Rankings, tables, graphs, events, and player details are returned as
@@ -198,25 +214,30 @@ table, err := client.ReportTable(ctx, warcraftlogs.TableDataTypeDamagedone,
 	warcraftlogs.ReportAnalysisParams{Code: "aBcDeFgHiJkLmN01"})
 ```
 
-Events are paginated. `NextPageTimestamp` is zero on the last page; otherwise
-pass it as the next `StartTime`:
+Events are paginated. `ReportEventsAll` follows the cursor for you and yields
+one event at a time, so you never hold more than a page in memory:
 
 ```go
 params := warcraftlogs.ReportEventsParams{Code: "aBcDeFgHiJkLmN01", FightIDs: []int{12}}
-for {
-	page, err := client.ReportEvents(ctx, warcraftlogs.EventDataTypeDeaths, params)
+for raw, err := range client.ReportEventsAll(ctx, warcraftlogs.EventDataTypeDeaths, params) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// ... handle page.Data ...
-	if page.NextPageTimestamp == 0 {
-		break
+	var e deathEvent
+	if err := json.Unmarshal(raw, &e); err != nil {
+		log.Fatal(err)
 	}
-	params.StartTime = page.NextPageTimestamp
+	// ... handle e ...
 }
 ```
 
-Events require either `FightIDs` or an explicit `StartTime`/`EndTime` range.
+Breaking out of the loop stops immediately without fetching another page. If
+the API ever returns a cursor that does not move forward, iteration stops with
+`ErrPageNotAdvancing` instead of re-requesting the same page.
+
+`ReportEvents` returns a single page if you want to drive pagination yourself;
+`NextPageTimestamp` is zero on the last page. Either way, events require either
+`FightIDs` or an explicit `StartTime`/`EndTime` range.
 
 [`examples/analysis`](examples/analysis) is a runnable walkthrough of a real
 log: report metadata, a per-boss pull summary, the damage breakdown of a kill,
@@ -268,7 +289,7 @@ Helpers classify errors returned by any method:
 if _, err := client.Report(ctx, code, false); err != nil {
 	switch {
 	case warcraftlogs.IsRateLimited(err):
-		// Hourly point budget exhausted (HTTP 429 or a GraphQL error).
+		// HTTP 429, or the GraphQL equivalent.
 	case warcraftlogs.IsUnauthorized(err):
 		// Missing, expired, or insufficient credentials.
 	case warcraftlogs.IsBlocked(err):
