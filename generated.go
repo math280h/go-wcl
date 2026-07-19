@@ -325,6 +325,24 @@ func (v *Encounter) GetJournalID() int { return v.JournalID }
 // GetZone returns Encounter.Zone, and is useful for accessing the field via an interface.
 func (v *Encounter) GetZone() ZoneSummary { return v.Zone }
 
+// EncounterPhases includes the GraphQL fields of EncounterPhases requested by the fragment EncounterPhases.
+type EncounterPhases struct {
+	EncounterID int `json:"encounterID"`
+	// Whether the phases can be used to separate wipes in the report UI.
+	SeparatesWipes *bool `json:"separatesWipes"`
+	// Phase metadata for all phases in this encounter.
+	Phases []PhaseMetadata `json:"phases"`
+}
+
+// GetEncounterID returns EncounterPhases.EncounterID, and is useful for accessing the field via an interface.
+func (v *EncounterPhases) GetEncounterID() int { return v.EncounterID }
+
+// GetSeparatesWipes returns EncounterPhases.SeparatesWipes, and is useful for accessing the field via an interface.
+func (v *EncounterPhases) GetSeparatesWipes() *bool { return v.SeparatesWipes }
+
+// GetPhases returns EncounterPhases.Phases, and is useful for accessing the field via an interface.
+func (v *EncounterPhases) GetPhases() []PhaseMetadata { return v.Phases }
+
 // The type of events or tables to examine.
 type EventDataType string
 
@@ -713,6 +731,44 @@ var AllKillType = []KillType{
 	KillTypeWipes,
 }
 
+// PhaseMetadata includes the GraphQL fields of PhaseMetadata requested by the fragment PhaseMetadata.
+// The GraphQL type's documentation follows.
+//
+// Information about a phase from a boss encounter.
+type PhaseMetadata struct {
+	// Phase ID. 1-indexed
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+	// Whether this phase represents an intermission.
+	IsIntermission *bool `json:"isIntermission"`
+}
+
+// GetId returns PhaseMetadata.Id, and is useful for accessing the field via an interface.
+func (v *PhaseMetadata) GetId() int { return v.Id }
+
+// GetName returns PhaseMetadata.Name, and is useful for accessing the field via an interface.
+func (v *PhaseMetadata) GetName() string { return v.Name }
+
+// GetIsIntermission returns PhaseMetadata.IsIntermission, and is useful for accessing the field via an interface.
+func (v *PhaseMetadata) GetIsIntermission() *bool { return v.IsIntermission }
+
+// PhaseTransition includes the GraphQL fields of PhaseTransition requested by the fragment PhaseTransition.
+// The GraphQL type's documentation follows.
+//
+// A spartan representation of phase transitions during a fight.
+type PhaseTransition struct {
+	// The 1-indexed id of the phase. Phase IDs are absolute within a fight: phases with the same ID correspond to the same semantic phase.
+	Id int `json:"id"`
+	// The report-relative timestamp of the transition into the phase. The phase ends at the beginning of the next phase, or at the end of the fight.
+	StartTime float64 `json:"startTime"`
+}
+
+// GetId returns PhaseTransition.Id, and is useful for accessing the field via an interface.
+func (v *PhaseTransition) GetId() int { return v.Id }
+
+// GetStartTime returns PhaseTransition.StartTime, and is useful for accessing the field via an interface.
+func (v *PhaseTransition) GetStartTime() float64 { return v.StartTime }
+
 // Whether or not rankings are compared against best scores for the entire tier or against all parses in a two week window.
 type RankingCompareType string
 
@@ -935,10 +991,8 @@ func (v *ReportArchiveStatus) GetIsAccessible() bool { return v.IsAccessible }
 // GetArchiveDate returns ReportArchiveStatus.ArchiveDate, and is useful for accessing the field via an interface.
 func (v *ReportArchiveStatus) GetArchiveDate() int { return v.ArchiveDate }
 
-// ReportFight includes the GraphQL fields of ReportFight requested by the fragment ReportFight.
-// The GraphQL type's documentation follows.
-//
-// The ReportFight represents a single fight that occurs in the report.
+// Nullable fields are generated as pointers so callers can tell absent from the
+// zero value: on a trash fight kill, difficulty and size are all null.
 type ReportFight struct {
 	// The report ID of the fight. This ID can be used to fetch only events, tables or graphs for this fight.
 	Id int `json:"id"`
@@ -947,15 +1001,15 @@ type ReportFight struct {
 	// The encounter ID of the fight. If the ID is 0, the fight is considered a trash fight.
 	EncounterID int `json:"encounterID"`
 	// Some boss fights may be converted to trash fights (encounterID = 0). When this occurs, `originalEncounterID` contains the original ID of the encounter.
-	OriginalEncounterID int `json:"originalEncounterID"`
+	OriginalEncounterID *int `json:"originalEncounterID"`
 	// The difficulty setting for the raid, dungeon, or arena. Null for trash.
-	Difficulty int `json:"difficulty"`
+	Difficulty *int `json:"difficulty"`
 	// The group size for the raid, dungeon, or arena. Null for trash.
-	Size int `json:"size"`
+	Size *int `json:"size"`
 	// Whether or not the fight was a boss kill, i.e., successful. If this field is false, it means the fight was a wipe or a failed run, etc..
-	Kill bool `json:"kill"`
+	Kill *bool `json:"kill"`
 	// Whether or not the fight is still in progress. If this field is false, it means the entire fight has been uploaded.
-	InProgress bool `json:"inProgress"`
+	InProgress *bool `json:"inProgress"`
 	// Whether or not a fight represents an entire raid from start to finish, e.g., in Classic WoW a complete run of Blackwing Lair.
 	CompleteRaid bool `json:"completeRaid"`
 	// The start time of the fight. This is a timestamp with millisecond precision that is relative to the start of the report, i.e., the start of the report is considered time 0.
@@ -963,27 +1017,33 @@ type ReportFight struct {
 	// The end time of the fight. This is a timestamp with millisecond precision that is relative to the start of the report, i.e., the start of the report is considered time 0.
 	EndTime float64 `json:"endTime"`
 	// The actual completion percentage of the fight. This is the field used to indicate how far into a fight a wipe was, since fights can be complicated and have multiple bosses, no bosses, bosses that heal, etc.
-	FightPercentage float64 `json:"fightPercentage"`
+	FightPercentage *float64 `json:"fightPercentage"`
 	// The percentage health of the active boss or bosses at the end of a fight.
-	BossPercentage float64 `json:"bossPercentage"`
+	BossPercentage *float64 `json:"bossPercentage"`
 	// The average item level of the players in the fight.
-	AverageItemLevel float64 `json:"averageItemLevel"`
+	AverageItemLevel *float64 `json:"averageItemLevel"`
 	// The IDs of all players involved in a fight. These players can be referenced in the master data actors table to get detailed information about each participant.
 	FriendlyPlayers []int `json:"friendlyPlayers"`
 	// The IDs of all players involved in a fight. These players can be referenced in the master data actors table to get detailed information about each participant.
 	EnemyPlayers []int `json:"enemyPlayers"`
 	// The keystone level for a Mythic+ dungeon.
-	KeystoneLevel int `json:"keystoneLevel"`
+	KeystoneLevel *int `json:"keystoneLevel"`
 	// The completion time for a Challenge Mode or Mythic+ Dungeon. This is the official time used on Blizzard leaderboards.
-	KeystoneTime int `json:"keystoneTime"`
+	KeystoneTime *int `json:"keystoneTime"`
 	// The bonus field represents Bronze, Silver or Gold in Challenge Modes, or +1-+3 pushing of Mythic+ keys. It has the values 1, 2, and 3.
-	KeystoneBonus int `json:"keystoneBonus"`
+	KeystoneBonus *int `json:"keystoneBonus"`
 	// The affixes for a Mythic+ dungeon.
 	KeystoneAffixes []int `json:"keystoneAffixes"`
 	// The hard mode level of the fight. Most fights don't support optional hard modes. This only applies to bosses like Sartharion.
-	HardModeLevel int `json:"hardModeLevel"`
+	HardModeLevel *int `json:"hardModeLevel"`
 	// The phase that the encounter was in when the fight ended. Counts up from 1 based off the phase type (i.e., normal phase vs intermission).
-	LastPhase int `json:"lastPhase"`
+	LastPhase *int `json:"lastPhase"`
+	// The phase that the encounter was in when the fight ended. Always increases from 0, so a fight with three real phases and two intermissions would count up from 0 to 4.
+	LastPhaseAsAbsoluteIndex *int `json:"lastPhaseAsAbsoluteIndex"`
+	// Whether or not the phase that the encounter was in when the fight ended was an intermission or not.
+	LastPhaseIsIntermission *bool `json:"lastPhaseIsIntermission"`
+	// List of observed phase transitions during the fight.
+	PhaseTransitions []PhaseTransition `json:"phaseTransitions"`
 	// The game zone the fight takes place in. This should not be confused with the zones used by the sites for rankings. This is the actual in-game zone info.
 	GameZone GameZoneSummary `json:"gameZone"`
 }
@@ -998,19 +1058,19 @@ func (v *ReportFight) GetName() string { return v.Name }
 func (v *ReportFight) GetEncounterID() int { return v.EncounterID }
 
 // GetOriginalEncounterID returns ReportFight.OriginalEncounterID, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetOriginalEncounterID() int { return v.OriginalEncounterID }
+func (v *ReportFight) GetOriginalEncounterID() *int { return v.OriginalEncounterID }
 
 // GetDifficulty returns ReportFight.Difficulty, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetDifficulty() int { return v.Difficulty }
+func (v *ReportFight) GetDifficulty() *int { return v.Difficulty }
 
 // GetSize returns ReportFight.Size, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetSize() int { return v.Size }
+func (v *ReportFight) GetSize() *int { return v.Size }
 
 // GetKill returns ReportFight.Kill, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetKill() bool { return v.Kill }
+func (v *ReportFight) GetKill() *bool { return v.Kill }
 
 // GetInProgress returns ReportFight.InProgress, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetInProgress() bool { return v.InProgress }
+func (v *ReportFight) GetInProgress() *bool { return v.InProgress }
 
 // GetCompleteRaid returns ReportFight.CompleteRaid, and is useful for accessing the field via an interface.
 func (v *ReportFight) GetCompleteRaid() bool { return v.CompleteRaid }
@@ -1022,13 +1082,13 @@ func (v *ReportFight) GetStartTime() float64 { return v.StartTime }
 func (v *ReportFight) GetEndTime() float64 { return v.EndTime }
 
 // GetFightPercentage returns ReportFight.FightPercentage, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetFightPercentage() float64 { return v.FightPercentage }
+func (v *ReportFight) GetFightPercentage() *float64 { return v.FightPercentage }
 
 // GetBossPercentage returns ReportFight.BossPercentage, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetBossPercentage() float64 { return v.BossPercentage }
+func (v *ReportFight) GetBossPercentage() *float64 { return v.BossPercentage }
 
 // GetAverageItemLevel returns ReportFight.AverageItemLevel, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetAverageItemLevel() float64 { return v.AverageItemLevel }
+func (v *ReportFight) GetAverageItemLevel() *float64 { return v.AverageItemLevel }
 
 // GetFriendlyPlayers returns ReportFight.FriendlyPlayers, and is useful for accessing the field via an interface.
 func (v *ReportFight) GetFriendlyPlayers() []int { return v.FriendlyPlayers }
@@ -1037,22 +1097,31 @@ func (v *ReportFight) GetFriendlyPlayers() []int { return v.FriendlyPlayers }
 func (v *ReportFight) GetEnemyPlayers() []int { return v.EnemyPlayers }
 
 // GetKeystoneLevel returns ReportFight.KeystoneLevel, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetKeystoneLevel() int { return v.KeystoneLevel }
+func (v *ReportFight) GetKeystoneLevel() *int { return v.KeystoneLevel }
 
 // GetKeystoneTime returns ReportFight.KeystoneTime, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetKeystoneTime() int { return v.KeystoneTime }
+func (v *ReportFight) GetKeystoneTime() *int { return v.KeystoneTime }
 
 // GetKeystoneBonus returns ReportFight.KeystoneBonus, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetKeystoneBonus() int { return v.KeystoneBonus }
+func (v *ReportFight) GetKeystoneBonus() *int { return v.KeystoneBonus }
 
 // GetKeystoneAffixes returns ReportFight.KeystoneAffixes, and is useful for accessing the field via an interface.
 func (v *ReportFight) GetKeystoneAffixes() []int { return v.KeystoneAffixes }
 
 // GetHardModeLevel returns ReportFight.HardModeLevel, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetHardModeLevel() int { return v.HardModeLevel }
+func (v *ReportFight) GetHardModeLevel() *int { return v.HardModeLevel }
 
 // GetLastPhase returns ReportFight.LastPhase, and is useful for accessing the field via an interface.
-func (v *ReportFight) GetLastPhase() int { return v.LastPhase }
+func (v *ReportFight) GetLastPhase() *int { return v.LastPhase }
+
+// GetLastPhaseAsAbsoluteIndex returns ReportFight.LastPhaseAsAbsoluteIndex, and is useful for accessing the field via an interface.
+func (v *ReportFight) GetLastPhaseAsAbsoluteIndex() *int { return v.LastPhaseAsAbsoluteIndex }
+
+// GetLastPhaseIsIntermission returns ReportFight.LastPhaseIsIntermission, and is useful for accessing the field via an interface.
+func (v *ReportFight) GetLastPhaseIsIntermission() *bool { return v.LastPhaseIsIntermission }
+
+// GetPhaseTransitions returns ReportFight.PhaseTransitions, and is useful for accessing the field via an interface.
+func (v *ReportFight) GetPhaseTransitions() []PhaseTransition { return v.PhaseTransitions }
 
 // GetGameZone returns ReportFight.GameZone, and is useful for accessing the field via an interface.
 func (v *ReportFight) GetGameZone() GameZoneSummary { return v.GameZone }
@@ -1868,34 +1937,6 @@ func (v *__getReportEventsInput) GetIncludeResources() bool { return v.IncludeRe
 // GetLimit returns __getReportEventsInput.Limit, and is useful for accessing the field via an interface.
 func (v *__getReportEventsInput) GetLimit() int { return v.Limit }
 
-// __getReportFightsInput is used internally by genqlient
-type __getReportFightsInput struct {
-	Code        string   `json:"code,omitempty"`
-	EncounterID int      `json:"encounterID,omitempty"`
-	Difficulty  int      `json:"difficulty,omitempty"`
-	KillType    KillType `json:"killType,omitempty"`
-	FightIDs    []int    `json:"fightIDs,omitempty"`
-	Translate   bool     `json:"translate"`
-}
-
-// GetCode returns __getReportFightsInput.Code, and is useful for accessing the field via an interface.
-func (v *__getReportFightsInput) GetCode() string { return v.Code }
-
-// GetEncounterID returns __getReportFightsInput.EncounterID, and is useful for accessing the field via an interface.
-func (v *__getReportFightsInput) GetEncounterID() int { return v.EncounterID }
-
-// GetDifficulty returns __getReportFightsInput.Difficulty, and is useful for accessing the field via an interface.
-func (v *__getReportFightsInput) GetDifficulty() int { return v.Difficulty }
-
-// GetKillType returns __getReportFightsInput.KillType, and is useful for accessing the field via an interface.
-func (v *__getReportFightsInput) GetKillType() KillType { return v.KillType }
-
-// GetFightIDs returns __getReportFightsInput.FightIDs, and is useful for accessing the field via an interface.
-func (v *__getReportFightsInput) GetFightIDs() []int { return v.FightIDs }
-
-// GetTranslate returns __getReportFightsInput.Translate, and is useful for accessing the field via an interface.
-func (v *__getReportFightsInput) GetTranslate() bool { return v.Translate }
-
 // __getReportGraphInput is used internally by genqlient
 type __getReportGraphInput struct {
 	Code             string        `json:"code,omitempty"`
@@ -2111,6 +2152,38 @@ func (v *__getReportTableInput) GetFilterExpression() string { return v.FilterEx
 
 // GetViewBy returns __getReportTableInput.ViewBy, and is useful for accessing the field via an interface.
 func (v *__getReportTableInput) GetViewBy() ViewType { return v.ViewBy }
+
+// __getReportWithFightsInput is used internally by genqlient
+type __getReportWithFightsInput struct {
+	Code          string   `json:"code,omitempty"`
+	AllowUnlisted bool     `json:"allowUnlisted"`
+	EncounterID   int      `json:"encounterID,omitempty"`
+	Difficulty    int      `json:"difficulty,omitempty"`
+	KillType      KillType `json:"killType,omitempty"`
+	FightIDs      []int    `json:"fightIDs,omitempty"`
+	Translate     bool     `json:"translate"`
+}
+
+// GetCode returns __getReportWithFightsInput.Code, and is useful for accessing the field via an interface.
+func (v *__getReportWithFightsInput) GetCode() string { return v.Code }
+
+// GetAllowUnlisted returns __getReportWithFightsInput.AllowUnlisted, and is useful for accessing the field via an interface.
+func (v *__getReportWithFightsInput) GetAllowUnlisted() bool { return v.AllowUnlisted }
+
+// GetEncounterID returns __getReportWithFightsInput.EncounterID, and is useful for accessing the field via an interface.
+func (v *__getReportWithFightsInput) GetEncounterID() int { return v.EncounterID }
+
+// GetDifficulty returns __getReportWithFightsInput.Difficulty, and is useful for accessing the field via an interface.
+func (v *__getReportWithFightsInput) GetDifficulty() int { return v.Difficulty }
+
+// GetKillType returns __getReportWithFightsInput.KillType, and is useful for accessing the field via an interface.
+func (v *__getReportWithFightsInput) GetKillType() KillType { return v.KillType }
+
+// GetFightIDs returns __getReportWithFightsInput.FightIDs, and is useful for accessing the field via an interface.
+func (v *__getReportWithFightsInput) GetFightIDs() []int { return v.FightIDs }
+
+// GetTranslate returns __getReportWithFightsInput.Translate, and is useful for accessing the field via an interface.
+func (v *__getReportWithFightsInput) GetTranslate() bool { return v.Translate }
 
 // __getServerByIDInput is used internally by genqlient
 type __getServerByIDInput struct {
@@ -2576,39 +2649,6 @@ type getReportEventsResponse struct {
 // GetReportData returns getReportEventsResponse.ReportData, and is useful for accessing the field via an interface.
 func (v *getReportEventsResponse) GetReportData() getReportEventsReportData { return v.ReportData }
 
-// getReportFightsReportData includes the requested fields of the GraphQL type ReportData.
-// The GraphQL type's documentation follows.
-//
-// The ReportData object enables the retrieval of single reports or filtered collections of reports.
-type getReportFightsReportData struct {
-	// Obtain a specific report by its code.
-	Report *getReportFightsReportDataReport `json:"report"`
-}
-
-// GetReport returns getReportFightsReportData.Report, and is useful for accessing the field via an interface.
-func (v *getReportFightsReportData) GetReport() *getReportFightsReportDataReport { return v.Report }
-
-// getReportFightsReportDataReport includes the requested fields of the GraphQL type Report.
-// The GraphQL type's documentation follows.
-//
-// A single report uploaded by a player to a guild or personal logs.
-type getReportFightsReportDataReport struct {
-	// A set of fights with details about participating players.
-	Fights []ReportFight `json:"fights"`
-}
-
-// GetFights returns getReportFightsReportDataReport.Fights, and is useful for accessing the field via an interface.
-func (v *getReportFightsReportDataReport) GetFights() []ReportFight { return v.Fights }
-
-// getReportFightsResponse is returned by getReportFights on success.
-type getReportFightsResponse struct {
-	// Obtain the report data object that allows the retrieval of individual reports or filtered collections of reports by guild or by user.
-	ReportData getReportFightsReportData `json:"reportData"`
-}
-
-// GetReportData returns getReportFightsResponse.ReportData, and is useful for accessing the field via an interface.
-func (v *getReportFightsResponse) GetReportData() getReportFightsReportData { return v.ReportData }
-
 // getReportGraphReportData includes the requested fields of the GraphQL type ReportData.
 // The GraphQL type's documentation follows.
 //
@@ -2804,6 +2844,178 @@ type getReportTableResponse struct {
 
 // GetReportData returns getReportTableResponse.ReportData, and is useful for accessing the field via an interface.
 func (v *getReportTableResponse) GetReportData() getReportTableReportData { return v.ReportData }
+
+// getReportWithFightsReportData includes the requested fields of the GraphQL type ReportData.
+// The GraphQL type's documentation follows.
+//
+// The ReportData object enables the retrieval of single reports or filtered collections of reports.
+type getReportWithFightsReportData struct {
+	// Obtain a specific report by its code.
+	Report *getReportWithFightsReportDataReport `json:"report"`
+}
+
+// GetReport returns getReportWithFightsReportData.Report, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportData) GetReport() *getReportWithFightsReportDataReport {
+	return v.Report
+}
+
+// getReportWithFightsReportDataReport includes the requested fields of the GraphQL type Report.
+// The GraphQL type's documentation follows.
+//
+// A single report uploaded by a player to a guild or personal logs.
+type getReportWithFightsReportDataReport struct {
+	Report `json:"-"`
+	// A set of fights with details about participating players.
+	Fights []ReportFight `json:"fights"`
+	// Phase information for all boss encounters observed in this report. This requires loading fight data, but does not double-charge API points if you load fights and phases.
+	Phases []EncounterPhases `json:"phases"`
+}
+
+// GetFights returns getReportWithFightsReportDataReport.Fights, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetFights() []ReportFight { return v.Fights }
+
+// GetPhases returns getReportWithFightsReportDataReport.Phases, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetPhases() []EncounterPhases { return v.Phases }
+
+// GetCode returns getReportWithFightsReportDataReport.Code, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetCode() string { return v.Report.Code }
+
+// GetTitle returns getReportWithFightsReportDataReport.Title, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetTitle() string { return v.Report.Title }
+
+// GetStartTime returns getReportWithFightsReportDataReport.StartTime, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetStartTime() float64 { return v.Report.StartTime }
+
+// GetEndTime returns getReportWithFightsReportDataReport.EndTime, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetEndTime() float64 { return v.Report.EndTime }
+
+// GetVisibility returns getReportWithFightsReportDataReport.Visibility, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetVisibility() string { return v.Report.Visibility }
+
+// GetRevision returns getReportWithFightsReportDataReport.Revision, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetRevision() int { return v.Report.Revision }
+
+// GetSegments returns getReportWithFightsReportDataReport.Segments, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetSegments() int { return v.Report.Segments }
+
+// GetExportedSegments returns getReportWithFightsReportDataReport.ExportedSegments, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetExportedSegments() int {
+	return v.Report.ExportedSegments
+}
+
+// GetZone returns getReportWithFightsReportDataReport.Zone, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetZone() ZoneSummary { return v.Report.Zone }
+
+// GetGuild returns getReportWithFightsReportDataReport.Guild, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetGuild() ReportGuild { return v.Report.Guild }
+
+// GetOwner returns getReportWithFightsReportDataReport.Owner, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetOwner() User { return v.Report.Owner }
+
+// GetRegion returns getReportWithFightsReportDataReport.Region, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetRegion() ReportRegion { return v.Report.Region }
+
+// GetArchiveStatus returns getReportWithFightsReportDataReport.ArchiveStatus, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetArchiveStatus() ReportArchiveStatus {
+	return v.Report.ArchiveStatus
+}
+
+func (v *getReportWithFightsReportDataReport) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*getReportWithFightsReportDataReport
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.getReportWithFightsReportDataReport = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.Report)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalgetReportWithFightsReportDataReport struct {
+	Fights []ReportFight `json:"fights"`
+
+	Phases []EncounterPhases `json:"phases"`
+
+	Code string `json:"code"`
+
+	Title string `json:"title"`
+
+	StartTime float64 `json:"startTime"`
+
+	EndTime float64 `json:"endTime"`
+
+	Visibility string `json:"visibility"`
+
+	Revision int `json:"revision"`
+
+	Segments int `json:"segments"`
+
+	ExportedSegments int `json:"exportedSegments"`
+
+	Zone ZoneSummary `json:"zone"`
+
+	Guild ReportGuild `json:"guild"`
+
+	Owner User `json:"owner"`
+
+	Region ReportRegion `json:"region"`
+
+	ArchiveStatus ReportArchiveStatus `json:"archiveStatus"`
+}
+
+func (v *getReportWithFightsReportDataReport) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *getReportWithFightsReportDataReport) __premarshalJSON() (*__premarshalgetReportWithFightsReportDataReport, error) {
+	var retval __premarshalgetReportWithFightsReportDataReport
+
+	retval.Fights = v.Fights
+	retval.Phases = v.Phases
+	retval.Code = v.Report.Code
+	retval.Title = v.Report.Title
+	retval.StartTime = v.Report.StartTime
+	retval.EndTime = v.Report.EndTime
+	retval.Visibility = v.Report.Visibility
+	retval.Revision = v.Report.Revision
+	retval.Segments = v.Report.Segments
+	retval.ExportedSegments = v.Report.ExportedSegments
+	retval.Zone = v.Report.Zone
+	retval.Guild = v.Report.Guild
+	retval.Owner = v.Report.Owner
+	retval.Region = v.Report.Region
+	retval.ArchiveStatus = v.Report.ArchiveStatus
+	return &retval, nil
+}
+
+// getReportWithFightsResponse is returned by getReportWithFights on success.
+type getReportWithFightsResponse struct {
+	// Obtain the report data object that allows the retrieval of individual reports or filtered collections of reports by guild or by user.
+	ReportData getReportWithFightsReportData `json:"reportData"`
+}
+
+// GetReportData returns getReportWithFightsResponse.ReportData, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsResponse) GetReportData() getReportWithFightsReportData {
+	return v.ReportData
+}
 
 // getServerByIDResponse is returned by getServerByID on success.
 type getServerByIDResponse struct {
@@ -3895,85 +4107,6 @@ func getReportEvents(
 	return data_, err_
 }
 
-// The query executed by getReportFights.
-const getReportFights_Operation = `
-query getReportFights ($code: String!, $encounterID: Int, $difficulty: Int, $killType: KillType, $fightIDs: [Int], $translate: Boolean) {
-	reportData {
-		report(code: $code) {
-			fights(encounterID: $encounterID, difficulty: $difficulty, killType: $killType, fightIDs: $fightIDs, translate: $translate) {
-				... ReportFight
-			}
-		}
-	}
-}
-fragment ReportFight on ReportFight {
-	id
-	name
-	encounterID
-	originalEncounterID
-	difficulty
-	size
-	kill
-	inProgress
-	completeRaid
-	startTime
-	endTime
-	fightPercentage
-	bossPercentage
-	averageItemLevel
-	friendlyPlayers
-	enemyPlayers
-	keystoneLevel
-	keystoneTime
-	keystoneBonus
-	keystoneAffixes
-	hardModeLevel
-	lastPhase
-	gameZone {
-		... GameZoneSummary
-	}
-}
-fragment GameZoneSummary on GameZone {
-	id
-	name
-}
-`
-
-func getReportFights(
-	ctx_ context.Context,
-	client_ graphql.Client,
-	code string,
-	encounterID int,
-	difficulty int,
-	killType KillType,
-	fightIDs []int,
-	translate bool,
-) (data_ *getReportFightsResponse, err_ error) {
-	req_ := &graphql.Request{
-		OpName: "getReportFights",
-		Query:  getReportFights_Operation,
-		Variables: &__getReportFightsInput{
-			Code:        code,
-			EncounterID: encounterID,
-			Difficulty:  difficulty,
-			KillType:    killType,
-			FightIDs:    fightIDs,
-			Translate:   translate,
-		},
-	}
-
-	data_ = &getReportFightsResponse{}
-	resp_ := &graphql.Response{Data: data_}
-
-	err_ = client_.MakeRequest(
-		ctx_,
-		req_,
-		resp_,
-	)
-
-	return data_, err_
-}
-
 // The query executed by getReportGraph.
 const getReportGraph_Operation = `
 query getReportGraph ($code: String!, $dataType: GraphDataType, $startTime: Float, $endTime: Float, $fightIDs: [Int], $encounterID: Int, $difficulty: Int, $killType: KillType, $hostilityType: HostilityType, $sourceID: Int, $targetID: Int, $abilityID: Float, $filterExpression: String, $viewBy: ViewType) {
@@ -4248,6 +4381,149 @@ func getReportTable(
 	}
 
 	data_ = &getReportTableResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by getReportWithFights.
+const getReportWithFights_Operation = `
+query getReportWithFights ($code: String!, $allowUnlisted: Boolean, $encounterID: Int, $difficulty: Int, $killType: KillType, $fightIDs: [Int], $translate: Boolean) {
+	reportData {
+		report(code: $code, allowUnlisted: $allowUnlisted) {
+			... Report
+			fights(encounterID: $encounterID, difficulty: $difficulty, killType: $killType, fightIDs: $fightIDs, translate: $translate) {
+				... ReportFight
+			}
+			phases {
+				... EncounterPhases
+			}
+		}
+	}
+}
+fragment Report on Report {
+	code
+	title
+	startTime
+	endTime
+	visibility
+	revision
+	segments
+	exportedSegments
+	zone {
+		... ZoneSummary
+	}
+	guild {
+		id
+		name
+	}
+	owner {
+		... User
+	}
+	region {
+		id
+		name
+	}
+	archiveStatus {
+		isArchived
+		isAccessible
+		archiveDate
+	}
+}
+fragment ReportFight on ReportFight {
+	id
+	name
+	encounterID
+	originalEncounterID
+	difficulty
+	size
+	kill
+	inProgress
+	completeRaid
+	startTime
+	endTime
+	fightPercentage
+	bossPercentage
+	averageItemLevel
+	friendlyPlayers
+	enemyPlayers
+	keystoneLevel
+	keystoneTime
+	keystoneBonus
+	keystoneAffixes
+	hardModeLevel
+	lastPhase
+	lastPhaseAsAbsoluteIndex
+	lastPhaseIsIntermission
+	phaseTransitions {
+		... PhaseTransition
+	}
+	gameZone {
+		... GameZoneSummary
+	}
+}
+fragment EncounterPhases on EncounterPhases {
+	encounterID
+	separatesWipes
+	phases {
+		... PhaseMetadata
+	}
+}
+fragment ZoneSummary on Zone {
+	id
+	name
+}
+fragment User on User {
+	id
+	name
+}
+fragment PhaseTransition on PhaseTransition {
+	id
+	startTime
+}
+fragment GameZoneSummary on GameZone {
+	id
+	name
+}
+fragment PhaseMetadata on PhaseMetadata {
+	id
+	name
+	isIntermission
+}
+`
+
+func getReportWithFights(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	code string,
+	allowUnlisted bool,
+	encounterID int,
+	difficulty int,
+	killType KillType,
+	fightIDs []int,
+	translate bool,
+) (data_ *getReportWithFightsResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "getReportWithFights",
+		Query:  getReportWithFights_Operation,
+		Variables: &__getReportWithFightsInput{
+			Code:          code,
+			AllowUnlisted: allowUnlisted,
+			EncounterID:   encounterID,
+			Difficulty:    difficulty,
+			KillType:      killType,
+			FightIDs:      fightIDs,
+			Translate:     translate,
+		},
+	}
+
+	data_ = &getReportWithFightsResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

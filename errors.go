@@ -2,7 +2,9 @@ package warcraftlogs
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -11,6 +13,29 @@ import (
 // ErrNotFound is returned by single-entity lookups when the API resolves the
 // query but no matching entity exists.
 var ErrNotFound = errors.New("warcraftlogs: not found")
+
+// ErrBlocked reports that a response was served by the CDN in front of the API
+// rather than the API itself. Match it with [IsBlocked].
+var ErrBlocked = errors.New("warcraftlogs: blocked by CDN")
+
+// CDNError is returned when the CDN answers with an HTML challenge or error
+// page instead of a GraphQL response. It unwraps to [ErrBlocked].
+type CDNError struct {
+	StatusCode int
+	URL        string
+	// Title is the <title> of the returned page, e.g. "Just a moment...". It is
+	// empty if the page had none.
+	Title string
+}
+
+func (e *CDNError) Error() string {
+	if e.Title != "" {
+		return fmt.Sprintf("warcraftlogs: blocked by CDN (HTTP %d, %q)", e.StatusCode, e.Title)
+	}
+	return fmt.Sprintf("warcraftlogs: blocked by CDN (HTTP %d)", e.StatusCode)
+}
+
+func (e *CDNError) Unwrap() error { return ErrBlocked }
 
 // orNotFound returns v, or ErrNotFound if v is nil.
 func orNotFound[T any](v *T) (*T, error) {
@@ -67,17 +92,73 @@ func GraphQLErrors(err error) []GraphQLError {
 	return out
 }
 
-// HTTPStatus returns the status code if err was caused by a non-2xx response.
+// HTTPStatus returns the status code if err was caused by a non-2xx response,
+// whether it came from the API or from the CDN in front of it.
 func HTTPStatus(err error) (int, bool) {
 	var he *graphql.HTTPError
 	if errors.As(err, &he) {
 		return he.StatusCode, true
 	}
+	var ce *CDNError
+	if errors.As(err, &ce) {
+		return ce.StatusCode, true
+	}
 	return 0, false
 }
 
-// IsRateLimited reports whether err was caused by an HTTP 429 response.
+// ErrorCode returns the "code" or "category" extension of the first GraphQL
+// error carrying one, or "" if there is none.
+func ErrorCode(err error) string {
+	for _, ge := range GraphQLErrors(err) {
+		for _, key := range []string{"code", "category"} {
+			if s, ok := ge.Extensions[key].(string); ok && s != "" {
+				return s
+			}
+		}
+	}
+	return ""
+}
+
+// IsBlocked reports whether the request was rejected by the CDN in front of the
+// API rather than reaching it. See [CDNError].
+func IsBlocked(err error) bool { return errors.Is(err, ErrBlocked) }
+
+// IsRateLimited reports whether err was caused by exhausting the hourly point
+// budget, reported either as an HTTP 429 or as a GraphQL error.
 func IsRateLimited(err error) bool {
-	code, ok := HTTPStatus(err)
-	return ok && code == http.StatusTooManyRequests
+	if IsBlocked(err) {
+		return false
+	}
+	if code, ok := HTTPStatus(err); ok && code == http.StatusTooManyRequests {
+		return true
+	}
+	return hasGraphQLMessage(err, "exhausted", "rate limit")
+}
+
+// IsUnauthorized reports whether err was caused by missing, expired or
+// insufficient credentials, reported either as an HTTP 401 or 403 or as a
+// GraphQL error. A CDN challenge is not an auth failure, so [IsBlocked] takes
+// precedence.
+func IsUnauthorized(err error) bool {
+	if IsBlocked(err) {
+		return false
+	}
+	if code, ok := HTTPStatus(err); ok && (code == http.StatusUnauthorized || code == http.StatusForbidden) {
+		return true
+	}
+	return hasGraphQLMessage(err, "do not have permission", "unauthenticated", "unauthorized")
+}
+
+// hasGraphQLMessage matches GraphQL error text case-insensitively. The API does
+// not classify these errors in extensions, so the message is all there is.
+func hasGraphQLMessage(err error, substrings ...string) bool {
+	for _, ge := range GraphQLErrors(err) {
+		msg := strings.ToLower(ge.Message)
+		for _, s := range substrings {
+			if strings.Contains(msg, s) {
+				return true
+			}
+		}
+	}
+	return false
 }

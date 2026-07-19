@@ -125,21 +125,62 @@ go run ./examples/userauth -redirect http://localhost:9000/callback
 Methods cover characters, guilds, reports, world data, game data, and users.
 
 ```go
-// Reports and fights.
+// Report header only.
 report, err := client.Report(ctx, "aBcDeFgHiJkLmN01", false)
-
-fights, err := client.ReportFights(ctx, warcraftlogs.ReportFightsParams{
-	Code:     "aBcDeFgHiJkLmN01",
-	KillType: warcraftlogs.KillTypeKills,
-})
-for _, f := range fights {
-	fmt.Printf("%s (kill=%t)\n", f.Name, f.Kill)
-}
 
 // World data.
 zones, err := client.Zones(ctx, 0) // 0 = all expansions
 encounter, err := client.Encounter(ctx, 3009)
 ```
+
+### Reports and fights
+
+`ReportWithFights` returns the header, the fights and the encounter phases
+together:
+
+```go
+report, err := client.ReportWithFights(ctx, warcraftlogs.ReportWithFightsParams{
+	Code:     "aBcDeFgHiJkLmN01",
+	KillType: warcraftlogs.KillTypeKills,
+})
+fmt.Println(report.Title, len(report.Fights))
+```
+
+Fields the schema marks nullable are pointers, because for several of them the
+Go zero value is also a legal answer. On a trash fight `Kill`, `Difficulty` and
+`Size` are all `nil`; on a boss fight `Kill` is `false` for a wipe:
+
+```go
+for _, f := range report.Fights {
+	switch {
+	case f.Kill == nil:
+		fmt.Printf("%s (trash)\n", f.Name)
+	case *f.Kill:
+		fmt.Printf("%s (kill)\n", f.Name)
+	default:
+		fmt.Printf("%s (wipe at %.1f%%)\n", f.Name, *f.FightPercentage)
+	}
+}
+```
+
+`report.Phases` carries the phase metadata for every encounter in the log.
+Join it against a fight's observed transitions to answer which phase the raid
+was in at a given report-relative timestamp:
+
+```go
+fight := report.Fights[0]
+if pt, ok := fight.PhaseAt(fight.EndTime); ok {
+	for _, p := range report.PhasesFor(fight.EncounterID) {
+		if p.Id == pt.Id {
+			fmt.Printf("ended in %s\n", p.Name) // e.g. "Stage Three"
+		}
+	}
+}
+```
+
+Prefer `PhaseTransitions` over the `LastPhase*` fields: a fight can re-enter a
+phase it has already been in, and `LastPhase` numbers normal phases and
+intermissions separately.
 
 ### Analysis endpoints
 
@@ -215,7 +256,9 @@ fmt.Printf("%.1f / %d points used, resets in %ds\n",
 ```
 
 Requests that return HTTP 429 or 5xx are retried automatically with backoff
-(configurable via `WithMaxRetries`).
+(configurable via `WithMaxRetries`), including the Cloudflare-specific 520-527
+range. A Cloudflare challenge page is reported as a `CDNError` rather than
+surfacing as a JSON decode failure.
 
 ### Errors
 
@@ -223,8 +266,16 @@ Helpers classify errors returned by any method:
 
 ```go
 if _, err := client.Report(ctx, code, false); err != nil {
-	if warcraftlogs.IsRateLimited(err) {
-		// back off
+	switch {
+	case warcraftlogs.IsRateLimited(err):
+		// Hourly point budget exhausted (HTTP 429 or a GraphQL error).
+	case warcraftlogs.IsUnauthorized(err):
+		// Missing, expired, or insufficient credentials.
+	case warcraftlogs.IsBlocked(err):
+		// Cloudflare served a challenge page; the request never reached the API.
+		var cdn *warcraftlogs.CDNError
+		errors.As(err, &cdn)
+		log.Printf("blocked: HTTP %d %q", cdn.StatusCode, cdn.Title)
 	}
 	for _, ge := range warcraftlogs.GraphQLErrors(err) {
 		// e.g. "graphql: reportData.report: This report does not exist."
@@ -235,6 +286,9 @@ if _, err := client.Report(ctx, code, false); err != nil {
 	}
 }
 ```
+
+`ErrorCode` returns the `code` or `category` extension of the first GraphQL
+error carrying one, so you can branch without matching on message text.
 
 ### Client options
 

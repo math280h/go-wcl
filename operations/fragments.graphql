@@ -178,29 +178,74 @@ fragment Report on Report {
   }
 }
 
+fragment PhaseTransition on PhaseTransition {
+  id
+  startTime
+}
+
+fragment PhaseMetadata on PhaseMetadata {
+  id
+  name
+  # @genqlient(pointer: true)
+  isIntermission
+}
+
+fragment EncounterPhases on EncounterPhases {
+  encounterID
+  # @genqlient(pointer: true)
+  separatesWipes
+  # @genqlient(flatten: true)
+  phases {
+    ...PhaseMetadata
+  }
+}
+
+# Nullable fields are generated as pointers so callers can tell absent from the
+# zero value: on a trash fight kill, difficulty and size are all null.
 fragment ReportFight on ReportFight {
   id
   name
   encounterID
+  # @genqlient(pointer: true)
   originalEncounterID
+  # @genqlient(pointer: true)
   difficulty
+  # @genqlient(pointer: true)
   size
+  # @genqlient(pointer: true)
   kill
+  # @genqlient(pointer: true)
   inProgress
   completeRaid
   startTime
   endTime
+  # @genqlient(pointer: true)
   fightPercentage
+  # @genqlient(pointer: true)
   bossPercentage
+  # @genqlient(pointer: true)
   averageItemLevel
   friendlyPlayers
   enemyPlayers
+  # @genqlient(pointer: true)
   keystoneLevel
+  # @genqlient(pointer: true)
   keystoneTime
+  # @genqlient(pointer: true)
   keystoneBonus
   keystoneAffixes
+  # @genqlient(pointer: true)
   hardModeLevel
+  # @genqlient(pointer: true)
   lastPhase
+  # @genqlient(pointer: true)
+  lastPhaseAsAbsoluteIndex
+  # @genqlient(pointer: true)
+  lastPhaseIsIntermission
+  # @genqlient(flatten: true)
+  phaseTransitions {
+    ...PhaseTransition
+  }
   # @genqlient(flatten: true)
   gameZone {
     ...GameZoneSummary

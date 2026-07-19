@@ -76,6 +76,80 @@ func TestHTTPStatusAndRateLimited(t *testing.T) {
 	}
 }
 
+func TestIsRateLimitedFromGraphQLMessage(t *testing.T) {
+	list := gqlerror.List{{Message: "You have exhausted your allotted points for this hour."}}
+	if !IsRateLimited(fmt.Errorf("wrapped: %w", list)) {
+		t.Error("IsRateLimited = false, want true")
+	}
+	if IsRateLimited(gqlerror.List{{Message: "This report does not exist."}}) {
+		t.Error("IsRateLimited(unrelated) = true, want false")
+	}
+}
+
+func TestIsUnauthorized(t *testing.T) {
+	for _, code := range []int{http.StatusUnauthorized, http.StatusForbidden} {
+		if !IsUnauthorized(&graphql.HTTPError{StatusCode: code}) {
+			t.Errorf("IsUnauthorized(%d) = false, want true", code)
+		}
+	}
+	if IsUnauthorized(&graphql.HTTPError{StatusCode: http.StatusNotFound}) {
+		t.Error("IsUnauthorized(404) = true, want false")
+	}
+	list := gqlerror.List{{Message: "You do not have permission to view this report."}}
+	if !IsUnauthorized(fmt.Errorf("wrapped: %w", list)) {
+		t.Error("IsUnauthorized(graphql) = false, want true")
+	}
+}
+
+func TestErrorCode(t *testing.T) {
+	list := gqlerror.List{
+		{Message: "no extensions"},
+		{Message: "categorized", Extensions: map[string]any{"category": "graphql"}},
+	}
+	if got := ErrorCode(fmt.Errorf("wrapped: %w", list)); got != "graphql" {
+		t.Errorf("ErrorCode = %q, want \"graphql\"", got)
+	}
+	// "code" wins over "category" when both are present.
+	both := gqlerror.List{{Extensions: map[string]any{"category": "graphql", "code": "FORBIDDEN"}}}
+	if got := ErrorCode(both); got != "FORBIDDEN" {
+		t.Errorf("ErrorCode = %q, want \"FORBIDDEN\"", got)
+	}
+	if got := ErrorCode(errors.New("plain")); got != "" {
+		t.Errorf("ErrorCode(plain) = %q, want \"\"", got)
+	}
+}
+
+func TestCDNError(t *testing.T) {
+	err := error(&CDNError{StatusCode: http.StatusForbidden, URL: "https://example.com", Title: "Just a moment..."})
+	if !IsBlocked(fmt.Errorf("wrapped: %w", err)) {
+		t.Error("IsBlocked = false, want true")
+	}
+	if !errors.Is(err, ErrBlocked) {
+		t.Error("errors.Is(err, ErrBlocked) = false, want true")
+	}
+	if got := err.Error(); got != `warcraftlogs: blocked by CDN (HTTP 403, "Just a moment...")` {
+		t.Errorf("Error() = %q", got)
+	}
+	untitled := &CDNError{StatusCode: http.StatusServiceUnavailable}
+	if got := untitled.Error(); got != "warcraftlogs: blocked by CDN (HTTP 503)" {
+		t.Errorf("Error() = %q", got)
+	}
+	if IsBlocked(errors.New("plain")) {
+		t.Error("IsBlocked(plain) = true, want false")
+	}
+
+	// A CDN block reports its status but is not an auth or rate-limit failure.
+	if status, ok := HTTPStatus(err); !ok || status != http.StatusForbidden {
+		t.Errorf("HTTPStatus = %d, %v; want 403, true", status, ok)
+	}
+	if IsUnauthorized(err) {
+		t.Error("IsUnauthorized(403 CDN block) = true, want false")
+	}
+	if IsRateLimited(&CDNError{StatusCode: http.StatusTooManyRequests}) {
+		t.Error("IsRateLimited(429 CDN block) = true, want false")
+	}
+}
+
 func TestOrNotFound(t *testing.T) {
 	v := &Zone{Id: 1}
 	got, err := orNotFound(v)

@@ -52,20 +52,19 @@ func run(ctx context.Context, code string) error {
 		return err
 	}
 
-	if err := describeReport(ctx, client, code); err != nil {
-		return err
-	}
-
-	fights, err := client.ReportFights(ctx, warcraftlogs.ReportFightsParams{Code: code})
+	// One request for the header, the fights and the encounter phases.
+	report, err := client.ReportWithFights(ctx, warcraftlogs.ReportWithFightsParams{Code: code})
 	if err != nil {
 		return err
 	}
-	if lastKill := summarizeFights(fights); lastKill != nil {
+
+	describeReport(code, report)
+	if lastKill := summarizeFights(report); lastKill != nil {
 		if err := topDamage(ctx, client, code, *lastKill); err != nil {
 			return err
 		}
 	}
-	if err := deaths(ctx, client, code, fights); err != nil {
+	if err := deaths(ctx, client, code, report.Fights); err != nil {
 		return err
 	}
 

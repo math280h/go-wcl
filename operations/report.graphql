@@ -13,8 +13,10 @@ query getReport(
 }
 
 # @genqlient(omitempty: true)
-query getReportFights(
+query getReportWithFights(
   $code: String!
+  # @genqlient(omitempty: false)
+  $allowUnlisted: Boolean
   $encounterID: Int
   $difficulty: Int
   $killType: KillType
@@ -24,7 +26,8 @@ query getReportFights(
 ) {
   reportData {
     # @genqlient(pointer: true)
-    report(code: $code) {
+    report(code: $code, allowUnlisted: $allowUnlisted) {
+      ...Report
       # @genqlient(flatten: true)
       fights(
         encounterID: $encounterID
@@ -34,6 +37,10 @@ query getReportFights(
         translate: $translate
       ) {
         ...ReportFight
+      }
+      # @genqlient(flatten: true)
+      phases {
+        ...EncounterPhases
       }
     }
   }

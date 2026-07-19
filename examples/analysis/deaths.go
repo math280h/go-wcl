@@ -63,7 +63,7 @@ func deaths(ctx context.Context, client *warcraftlogs.Client, code string, fight
 	}
 
 	outcome := "wipe"
-	if fight.Kill {
+	if fight.Kill != nil && *fight.Kill {
 		outcome = "kill"
 	}
 	fmt.Printf("\n== deaths: %s (%s, %d of %d in the report) ==\n",

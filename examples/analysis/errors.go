@@ -16,7 +16,7 @@ func demoErrors(ctx context.Context, client *warcraftlogs.Client) {
 		fmt.Println("missing character:  ErrNotFound")
 	}
 
-	_, err := client.ReportFights(ctx, warcraftlogs.ReportFightsParams{Code: "zzzzzzzzzzzzzzzz"})
+	_, err := client.ReportWithFights(ctx, warcraftlogs.ReportWithFightsParams{Code: "zzzzzzzzzzzzzzzz"})
 	for _, ge := range warcraftlogs.GraphQLErrors(err) {
 		fmt.Printf("bad report code:    %s: %s\n", ge.Path, ge.Message)
 	}
