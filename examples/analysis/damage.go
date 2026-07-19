@@ -10,7 +10,7 @@ import (
 	warcraftlogs "github.com/math280h/go-wcl"
 )
 
-// damageTable is the payload of ReportTable for TableDataTypeDamagedone.
+// damageTable is the payload of ReportTable for TableDataTypeDamageDone.
 type damageTable struct {
 	Data struct {
 		Entries []damageEntry `json:"entries"`
@@ -25,7 +25,7 @@ type damageEntry struct {
 }
 
 func topDamage(ctx context.Context, client *warcraftlogs.Client, code string, fight warcraftlogs.ReportFight) error {
-	raw, err := client.ReportTable(ctx, warcraftlogs.TableDataTypeDamagedone,
+	raw, err := client.ReportTable(ctx, warcraftlogs.TableDataTypeDamageDone,
 		warcraftlogs.ReportAnalysisParams{Code: code, FightIDs: []int{fight.Id}})
 	if err != nil {
 		return err

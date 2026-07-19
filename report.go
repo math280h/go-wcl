@@ -84,6 +84,38 @@ func (f *ReportFight) PhaseAt(t float64) (PhaseTransition, bool) {
 	return cur, found
 }
 
+// ReportsParams selects the reports returned by [Client.Reports]. Zero fields
+// are omitted from the query. Identify a guild either by GuildID or by the
+// GuildName, GuildServerSlug and GuildServerRegion trio; GuildTagID takes
+// precedence over both. UserID lists a user's personal logs instead.
+type ReportsParams struct {
+	GuildID           int
+	GuildName         string
+	GuildServerSlug   string
+	GuildServerRegion string
+	GuildTagID        int
+	UserID            int
+	ZoneID            int
+	GameZoneID        int
+	StartTime         float64
+	EndTime           float64
+	Limit             int
+	Page              int
+}
+
+// Reports lists uploaded reports for a guild or user. Advance through the
+// result by incrementing Page while [ReportPage.HasMorePages] is true. Limit
+// defaults to 100, which is also the maximum.
+func (c *Client) Reports(ctx context.Context, p ReportsParams) (ReportPage, error) {
+	resp, err := getReports(ctx, c.gql, p.GuildID, p.GuildName, p.GuildServerSlug,
+		p.GuildServerRegion, p.GuildTagID, p.UserID, p.ZoneID, p.GameZoneID,
+		p.StartTime, p.EndTime, p.Limit, p.Page)
+	if err != nil {
+		return ReportPage{}, err
+	}
+	return resp.ReportData.Reports, nil
+}
+
 // Actor types and sub-types accepted by [ReportActorsParams]. The API matches
 // these case-sensitively against its own actor classification.
 const (

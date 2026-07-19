@@ -6,3 +6,7 @@ package: warcraftlogs
 bindings:
   JSON:
     type: encoding/json.RawMessage
+# Without this, genqlient lowercases everything after the first letter, giving
+# EventDataTypeDamagetaken for the schema's DamageTaken.
+casing:
+  all_enums: auto_camel_case

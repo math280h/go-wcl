@@ -64,6 +64,42 @@ query getReportMasterData(
 }
 
 # @genqlient(omitempty: true)
+query getReports(
+  $guildID: Int
+  $guildName: String
+  $guildServerSlug: String
+  $guildServerRegion: String
+  $guildTagID: Int
+  $userID: Int
+  $zoneID: Int
+  $gameZoneID: Int
+  $startTime: Float
+  $endTime: Float
+  $limit: Int
+  $page: Int
+) {
+  reportData {
+    # @genqlient(flatten: true)
+    reports(
+      guildID: $guildID
+      guildName: $guildName
+      guildServerSlug: $guildServerSlug
+      guildServerRegion: $guildServerRegion
+      guildTagID: $guildTagID
+      userID: $userID
+      zoneID: $zoneID
+      gameZoneID: $gameZoneID
+      startTime: $startTime
+      endTime: $endTime
+      limit: $limit
+      page: $page
+    ) {
+      ...ReportPage
+    }
+  }
+}
+
+# @genqlient(omitempty: true)
 query getReportActors(
   $code: String!
   $actorType: String

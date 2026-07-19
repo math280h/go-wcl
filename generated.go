@@ -354,11 +354,11 @@ const (
 	// Casts.
 	EventDataTypeCasts EventDataType = "Casts"
 	// Combatant info events (includes gear).
-	EventDataTypeCombatantinfo EventDataType = "CombatantInfo"
+	EventDataTypeCombatantInfo EventDataType = "CombatantInfo"
 	// Damage done.
-	EventDataTypeDamagedone EventDataType = "DamageDone"
+	EventDataTypeDamageDone EventDataType = "DamageDone"
 	// Damage taken.
-	EventDataTypeDamagetaken EventDataType = "DamageTaken"
+	EventDataTypeDamageTaken EventDataType = "DamageTaken"
 	// Deaths.
 	EventDataTypeDeaths EventDataType = "Deaths"
 	// Debuffs.
@@ -381,9 +381,9 @@ var AllEventDataType = []EventDataType{
 	EventDataTypeAll,
 	EventDataTypeBuffs,
 	EventDataTypeCasts,
-	EventDataTypeCombatantinfo,
-	EventDataTypeDamagedone,
-	EventDataTypeDamagetaken,
+	EventDataTypeCombatantInfo,
+	EventDataTypeDamageDone,
+	EventDataTypeDamageTaken,
 	EventDataTypeDeaths,
 	EventDataTypeDebuffs,
 	EventDataTypeDispels,
@@ -605,9 +605,9 @@ const (
 	// Casts.
 	GraphDataTypeCasts GraphDataType = "Casts"
 	// Damage done.
-	GraphDataTypeDamagedone GraphDataType = "DamageDone"
+	GraphDataTypeDamageDone GraphDataType = "DamageDone"
 	// Damage taken.
-	GraphDataTypeDamagetaken GraphDataType = "DamageTaken"
+	GraphDataTypeDamageTaken GraphDataType = "DamageTaken"
 	// Deaths.
 	GraphDataTypeDeaths GraphDataType = "Deaths"
 	// Debuffs.
@@ -632,8 +632,8 @@ var AllGraphDataType = []GraphDataType{
 	GraphDataTypeSummary,
 	GraphDataTypeBuffs,
 	GraphDataTypeCasts,
-	GraphDataTypeDamagedone,
-	GraphDataTypeDamagetaken,
+	GraphDataTypeDamageDone,
+	GraphDataTypeDamageTaken,
 	GraphDataTypeDeaths,
 	GraphDataTypeDebuffs,
 	GraphDataTypeDispels,
@@ -1251,6 +1251,51 @@ func (v *ReportMasterDataAbilitiesReportAbility) GetName() string { return v.Nam
 // GetType returns ReportMasterDataAbilitiesReportAbility.Type, and is useful for accessing the field via an interface.
 func (v *ReportMasterDataAbilitiesReportAbility) GetType() string { return v.Type }
 
+// Aliased because the schema spells these snake_case, which would otherwise
+// generate Go fields like Per_page.
+type ReportPage struct {
+	// Number of total items selected by the query
+	Total int `json:"total"`
+	// Number of items returned per page
+	PerPage int `json:"perPage"`
+	// Current page of the cursor
+	CurrentPage int `json:"currentPage"`
+	// The last page (number of pages)
+	LastPage int `json:"lastPage"`
+	// Determines if cursor has more pages after the current page
+	HasMorePages bool `json:"hasMorePages"`
+	// Number of the first item returned
+	From int `json:"from"`
+	// Number of the last item returned
+	To int `json:"to"`
+	// List of items on the current page
+	Data []Report `json:"data"`
+}
+
+// GetTotal returns ReportPage.Total, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetTotal() int { return v.Total }
+
+// GetPerPage returns ReportPage.PerPage, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetPerPage() int { return v.PerPage }
+
+// GetCurrentPage returns ReportPage.CurrentPage, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetCurrentPage() int { return v.CurrentPage }
+
+// GetLastPage returns ReportPage.LastPage, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetLastPage() int { return v.LastPage }
+
+// GetHasMorePages returns ReportPage.HasMorePages, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetHasMorePages() bool { return v.HasMorePages }
+
+// GetFrom returns ReportPage.From, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetFrom() int { return v.From }
+
+// GetTo returns ReportPage.To, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetTo() int { return v.To }
+
+// GetData returns ReportPage.Data, and is useful for accessing the field via an interface.
+func (v *ReportPage) GetData() []Report { return v.Data }
+
 // All the possible metrics.
 type ReportRankingMetricType string
 
@@ -1329,7 +1374,7 @@ const (
 	// Fetch any role..
 	RoleTypeAny RoleType = "Any"
 	// Fetch the DPS role only.
-	RoleTypeDps RoleType = "DPS"
+	RoleTypeDPS RoleType = "DPS"
 	// Fetch the healer role only.
 	RoleTypeHealer RoleType = "Healer"
 	// Fetch the tanking role only.
@@ -1338,7 +1383,7 @@ const (
 
 var AllRoleType = []RoleType{
 	RoleTypeAny,
-	RoleTypeDps,
+	RoleTypeDPS,
 	RoleTypeHealer,
 	RoleTypeTank,
 }
@@ -1396,9 +1441,9 @@ const (
 	// Casts.
 	TableDataTypeCasts TableDataType = "Casts"
 	// Damage done.
-	TableDataTypeDamagedone TableDataType = "DamageDone"
+	TableDataTypeDamageDone TableDataType = "DamageDone"
 	// Damage taken.
-	TableDataTypeDamagetaken TableDataType = "DamageTaken"
+	TableDataTypeDamageTaken TableDataType = "DamageTaken"
 	// Deaths.
 	TableDataTypeDeaths TableDataType = "Deaths"
 	// Debuffs.
@@ -1423,8 +1468,8 @@ var AllTableDataType = []TableDataType{
 	TableDataTypeSummary,
 	TableDataTypeBuffs,
 	TableDataTypeCasts,
-	TableDataTypeDamagedone,
-	TableDataTypeDamagetaken,
+	TableDataTypeDamageDone,
+	TableDataTypeDamageTaken,
 	TableDataTypeDeaths,
 	TableDataTypeDebuffs,
 	TableDataTypeDispels,
@@ -1817,6 +1862,66 @@ func (v *__getClassesInput) GetFactionID() int { return v.FactionID }
 // GetZoneID returns __getClassesInput.ZoneID, and is useful for accessing the field via an interface.
 func (v *__getClassesInput) GetZoneID() int { return v.ZoneID }
 
+// __getEncounterCharacterRankingsInput is used internally by genqlient
+type __getEncounterCharacterRankingsInput struct {
+	Id                   int                        `json:"id,omitempty"`
+	Difficulty           int                        `json:"difficulty,omitempty"`
+	ClassName            string                     `json:"className,omitempty"`
+	SpecName             string                     `json:"specName,omitempty"`
+	Metric               CharacterRankingMetricType `json:"metric,omitempty"`
+	Page                 int                        `json:"page,omitempty"`
+	Partition            int                        `json:"partition,omitempty"`
+	Bracket              int                        `json:"bracket,omitempty"`
+	Size                 int                        `json:"size,omitempty"`
+	ServerRegion         string                     `json:"serverRegion,omitempty"`
+	ServerSlug           string                     `json:"serverSlug,omitempty"`
+	Filter               string                     `json:"filter,omitempty"`
+	IncludeCombatantInfo bool                       `json:"includeCombatantInfo,omitempty"`
+}
+
+// GetId returns __getEncounterCharacterRankingsInput.Id, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetId() int { return v.Id }
+
+// GetDifficulty returns __getEncounterCharacterRankingsInput.Difficulty, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetDifficulty() int { return v.Difficulty }
+
+// GetClassName returns __getEncounterCharacterRankingsInput.ClassName, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetClassName() string { return v.ClassName }
+
+// GetSpecName returns __getEncounterCharacterRankingsInput.SpecName, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetSpecName() string { return v.SpecName }
+
+// GetMetric returns __getEncounterCharacterRankingsInput.Metric, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetMetric() CharacterRankingMetricType {
+	return v.Metric
+}
+
+// GetPage returns __getEncounterCharacterRankingsInput.Page, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetPage() int { return v.Page }
+
+// GetPartition returns __getEncounterCharacterRankingsInput.Partition, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetPartition() int { return v.Partition }
+
+// GetBracket returns __getEncounterCharacterRankingsInput.Bracket, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetBracket() int { return v.Bracket }
+
+// GetSize returns __getEncounterCharacterRankingsInput.Size, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetSize() int { return v.Size }
+
+// GetServerRegion returns __getEncounterCharacterRankingsInput.ServerRegion, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetServerRegion() string { return v.ServerRegion }
+
+// GetServerSlug returns __getEncounterCharacterRankingsInput.ServerSlug, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetServerSlug() string { return v.ServerSlug }
+
+// GetFilter returns __getEncounterCharacterRankingsInput.Filter, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetFilter() string { return v.Filter }
+
+// GetIncludeCombatantInfo returns __getEncounterCharacterRankingsInput.IncludeCombatantInfo, and is useful for accessing the field via an interface.
+func (v *__getEncounterCharacterRankingsInput) GetIncludeCombatantInfo() bool {
+	return v.IncludeCombatantInfo
+}
+
 // __getEncounterInput is used internally by genqlient
 type __getEncounterInput struct {
 	Id int `json:"id"`
@@ -2205,6 +2310,58 @@ func (v *__getReportWithFightsInput) GetFightIDs() []int { return v.FightIDs }
 // GetTranslate returns __getReportWithFightsInput.Translate, and is useful for accessing the field via an interface.
 func (v *__getReportWithFightsInput) GetTranslate() bool { return v.Translate }
 
+// __getReportsInput is used internally by genqlient
+type __getReportsInput struct {
+	GuildID           int     `json:"guildID,omitempty"`
+	GuildName         string  `json:"guildName,omitempty"`
+	GuildServerSlug   string  `json:"guildServerSlug,omitempty"`
+	GuildServerRegion string  `json:"guildServerRegion,omitempty"`
+	GuildTagID        int     `json:"guildTagID,omitempty"`
+	UserID            int     `json:"userID,omitempty"`
+	ZoneID            int     `json:"zoneID,omitempty"`
+	GameZoneID        int     `json:"gameZoneID,omitempty"`
+	StartTime         float64 `json:"startTime,omitempty"`
+	EndTime           float64 `json:"endTime,omitempty"`
+	Limit             int     `json:"limit,omitempty"`
+	Page              int     `json:"page,omitempty"`
+}
+
+// GetGuildID returns __getReportsInput.GuildID, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetGuildID() int { return v.GuildID }
+
+// GetGuildName returns __getReportsInput.GuildName, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetGuildName() string { return v.GuildName }
+
+// GetGuildServerSlug returns __getReportsInput.GuildServerSlug, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetGuildServerSlug() string { return v.GuildServerSlug }
+
+// GetGuildServerRegion returns __getReportsInput.GuildServerRegion, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetGuildServerRegion() string { return v.GuildServerRegion }
+
+// GetGuildTagID returns __getReportsInput.GuildTagID, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetGuildTagID() int { return v.GuildTagID }
+
+// GetUserID returns __getReportsInput.UserID, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetUserID() int { return v.UserID }
+
+// GetZoneID returns __getReportsInput.ZoneID, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetZoneID() int { return v.ZoneID }
+
+// GetGameZoneID returns __getReportsInput.GameZoneID, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetGameZoneID() int { return v.GameZoneID }
+
+// GetStartTime returns __getReportsInput.StartTime, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetStartTime() float64 { return v.StartTime }
+
+// GetEndTime returns __getReportsInput.EndTime, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetEndTime() float64 { return v.EndTime }
+
+// GetLimit returns __getReportsInput.Limit, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetLimit() int { return v.Limit }
+
+// GetPage returns __getReportsInput.Page, and is useful for accessing the field via an interface.
+func (v *__getReportsInput) GetPage() int { return v.Page }
+
 // __getServerByIDInput is used internally by genqlient
 type __getServerByIDInput struct {
 	Id int `json:"id"`
@@ -2435,6 +2592,45 @@ type getCurrentUserUserData struct {
 
 // GetCurrentUser returns getCurrentUserUserData.CurrentUser, and is useful for accessing the field via an interface.
 func (v *getCurrentUserUserData) GetCurrentUser() *CurrentUser { return v.CurrentUser }
+
+// getEncounterCharacterRankingsResponse is returned by getEncounterCharacterRankings on success.
+type getEncounterCharacterRankingsResponse struct {
+	// Obtain the world data object that holds collections of data such as all expansions, regions, subregions, servers, dungeon/raid zones, and encounters.
+	WorldData getEncounterCharacterRankingsWorldData `json:"worldData"`
+}
+
+// GetWorldData returns getEncounterCharacterRankingsResponse.WorldData, and is useful for accessing the field via an interface.
+func (v *getEncounterCharacterRankingsResponse) GetWorldData() getEncounterCharacterRankingsWorldData {
+	return v.WorldData
+}
+
+// getEncounterCharacterRankingsWorldData includes the requested fields of the GraphQL type WorldData.
+// The GraphQL type's documentation follows.
+//
+// The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc.
+type getEncounterCharacterRankingsWorldData struct {
+	// Obtain a specific encounter by id.
+	Encounter *getEncounterCharacterRankingsWorldDataEncounter `json:"encounter"`
+}
+
+// GetEncounter returns getEncounterCharacterRankingsWorldData.Encounter, and is useful for accessing the field via an interface.
+func (v *getEncounterCharacterRankingsWorldData) GetEncounter() *getEncounterCharacterRankingsWorldDataEncounter {
+	return v.Encounter
+}
+
+// getEncounterCharacterRankingsWorldDataEncounter includes the requested fields of the GraphQL type Encounter.
+// The GraphQL type's documentation follows.
+//
+// A single encounter for the game.
+type getEncounterCharacterRankingsWorldDataEncounter struct {
+	// Player rankings information for a zone. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	CharacterRankings json.RawMessage `json:"characterRankings"`
+}
+
+// GetCharacterRankings returns getEncounterCharacterRankingsWorldDataEncounter.CharacterRankings, and is useful for accessing the field via an interface.
+func (v *getEncounterCharacterRankingsWorldDataEncounter) GetCharacterRankings() json.RawMessage {
+	return v.CharacterRankings
+}
 
 // getEncounterResponse is returned by getEncounter on success.
 type getEncounterResponse struct {
@@ -3084,6 +3280,27 @@ func (v *getReportWithFightsResponse) GetReportData() getReportWithFightsReportD
 	return v.ReportData
 }
 
+// getReportsReportData includes the requested fields of the GraphQL type ReportData.
+// The GraphQL type's documentation follows.
+//
+// The ReportData object enables the retrieval of single reports or filtered collections of reports.
+type getReportsReportData struct {
+	// A set of reports for a specific guild, guild tag, or user.
+	Reports ReportPage `json:"reports"`
+}
+
+// GetReports returns getReportsReportData.Reports, and is useful for accessing the field via an interface.
+func (v *getReportsReportData) GetReports() ReportPage { return v.Reports }
+
+// getReportsResponse is returned by getReports on success.
+type getReportsResponse struct {
+	// Obtain the report data object that allows the retrieval of individual reports or filtered collections of reports by guild or by user.
+	ReportData getReportsReportData `json:"reportData"`
+}
+
+// GetReportData returns getReportsResponse.ReportData, and is useful for accessing the field via an interface.
+func (v *getReportsResponse) GetReportData() getReportsReportData { return v.ReportData }
+
 // getServerByIDResponse is returned by getServerByID on success.
 type getServerByIDResponse struct {
 	// Obtain the world data object that holds collections of data such as all expansions, regions, subregions, servers, dungeon/raid zones, and encounters.
@@ -3633,6 +3850,66 @@ func getEncounter(
 	}
 
 	data_ = &getEncounterResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by getEncounterCharacterRankings.
+const getEncounterCharacterRankings_Operation = `
+query getEncounterCharacterRankings ($id: Int!, $difficulty: Int, $className: String, $specName: String, $metric: CharacterRankingMetricType, $page: Int, $partition: Int, $bracket: Int, $size: Int, $serverRegion: String, $serverSlug: String, $filter: String, $includeCombatantInfo: Boolean) {
+	worldData {
+		encounter(id: $id) {
+			characterRankings(difficulty: $difficulty, className: $className, specName: $specName, metric: $metric, page: $page, partition: $partition, bracket: $bracket, size: $size, serverRegion: $serverRegion, serverSlug: $serverSlug, filter: $filter, includeCombatantInfo: $includeCombatantInfo)
+		}
+	}
+}
+`
+
+func getEncounterCharacterRankings(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	id int,
+	difficulty int,
+	className string,
+	specName string,
+	metric CharacterRankingMetricType,
+	page int,
+	partition int,
+	bracket int,
+	size int,
+	serverRegion string,
+	serverSlug string,
+	filter string,
+	includeCombatantInfo bool,
+) (data_ *getEncounterCharacterRankingsResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "getEncounterCharacterRankings",
+		Query:  getEncounterCharacterRankings_Operation,
+		Variables: &__getEncounterCharacterRankingsInput{
+			Id:                   id,
+			Difficulty:           difficulty,
+			ClassName:            className,
+			SpecName:             specName,
+			Metric:               metric,
+			Page:                 page,
+			Partition:            partition,
+			Bracket:              bracket,
+			Size:                 size,
+			ServerRegion:         serverRegion,
+			ServerSlug:           serverSlug,
+			Filter:               filter,
+			IncludeCombatantInfo: includeCombatantInfo,
+		},
+	}
+
+	data_ = &getEncounterCharacterRankingsResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
@@ -4650,6 +4927,113 @@ func getReportWithFights(
 	}
 
 	data_ = &getReportWithFightsResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by getReports.
+const getReports_Operation = `
+query getReports ($guildID: Int, $guildName: String, $guildServerSlug: String, $guildServerRegion: String, $guildTagID: Int, $userID: Int, $zoneID: Int, $gameZoneID: Int, $startTime: Float, $endTime: Float, $limit: Int, $page: Int) {
+	reportData {
+		reports(guildID: $guildID, guildName: $guildName, guildServerSlug: $guildServerSlug, guildServerRegion: $guildServerRegion, guildTagID: $guildTagID, userID: $userID, zoneID: $zoneID, gameZoneID: $gameZoneID, startTime: $startTime, endTime: $endTime, limit: $limit, page: $page) {
+			... ReportPage
+		}
+	}
+}
+fragment ReportPage on ReportPagination {
+	total
+	perPage: per_page
+	currentPage: current_page
+	lastPage: last_page
+	hasMorePages: has_more_pages
+	from
+	to
+	data {
+		... Report
+	}
+}
+fragment Report on Report {
+	code
+	title
+	startTime
+	endTime
+	visibility
+	revision
+	segments
+	exportedSegments
+	zone {
+		... ZoneSummary
+	}
+	guild {
+		id
+		name
+	}
+	owner {
+		... User
+	}
+	region {
+		id
+		name
+	}
+	archiveStatus {
+		isArchived
+		isAccessible
+		archiveDate
+	}
+}
+fragment ZoneSummary on Zone {
+	id
+	name
+}
+fragment User on User {
+	id
+	name
+}
+`
+
+func getReports(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	guildID int,
+	guildName string,
+	guildServerSlug string,
+	guildServerRegion string,
+	guildTagID int,
+	userID int,
+	zoneID int,
+	gameZoneID int,
+	startTime float64,
+	endTime float64,
+	limit int,
+	page int,
+) (data_ *getReportsResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "getReports",
+		Query:  getReports_Operation,
+		Variables: &__getReportsInput{
+			GuildID:           guildID,
+			GuildName:         guildName,
+			GuildServerSlug:   guildServerSlug,
+			GuildServerRegion: guildServerRegion,
+			GuildTagID:        guildTagID,
+			UserID:            userID,
+			ZoneID:            zoneID,
+			GameZoneID:        gameZoneID,
+			StartTime:         startTime,
+			EndTime:           endTime,
+			Limit:             limit,
+			Page:              page,
+		},
+	}
+
+	data_ = &getReportsResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

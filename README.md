@@ -133,6 +133,26 @@ zones, err := client.Zones(ctx, 0) // 0 = all expansions
 encounter, err := client.Encounter(ctx, 3009)
 ```
 
+### Listing reports
+
+`Reports` lists a guild's uploaded logs. Identify the guild by `GuildID`, or by
+the name/slug/region trio; `UserID` lists a user's personal logs instead.
+
+```go
+page, err := client.Reports(ctx, warcraftlogs.ReportsParams{
+	GuildName:         "Skill Issue",
+	GuildServerSlug:   "tarren-mill",
+	GuildServerRegion: "eu",
+})
+for _, r := range page.Data {
+	fmt.Printf("%s  %s\n", r.Code, r.Title)
+}
+```
+
+`page.Data` holds `Report` values, the same type `Client.Report` returns. Walk
+further by incrementing `Page` while `page.HasMorePages` is true; `Total`,
+`PerPage`, `CurrentPage`, `LastPage`, `From` and `To` are also available.
+
 ### Reports and fights
 
 `ReportWithFights` returns the header, the fights and the encounter phases
@@ -185,8 +205,7 @@ intermissions separately.
 ### Actors
 
 `ReportMasterData` returns every actor in a report alongside the full ability
-table. When you only need actors — a roster, a player picker, attendance —
-`ReportActors` filters server-side:
+table. `ReportActors` filters server-side:
 
 ```go
 players, err := client.ReportActors(ctx, warcraftlogs.ReportActorsParams{
@@ -210,8 +229,20 @@ data, err := client.CharacterZoneRankings(ctx, warcraftlogs.ZoneRankingsParams{
 	Metric:    warcraftlogs.CharacterPageRankingMetricTypeDps,
 })
 
-table, err := client.ReportTable(ctx, warcraftlogs.TableDataTypeDamagedone,
+table, err := client.ReportTable(ctx, warcraftlogs.TableDataTypeDamageDone,
 	warcraftlogs.ReportAnalysisParams{Code: "aBcDeFgHiJkLmN01"})
+```
+
+`CharacterZoneRankings` and `CharacterEncounterRankings` rank a named character.
+`EncounterLeaderboard` is the inverse - the leaderboard for one boss:
+
+```go
+top, err := client.EncounterLeaderboard(ctx, warcraftlogs.EncounterLeaderboardParams{
+	EncounterID: 3009,
+	ClassName:   "Mage",
+	SpecName:    "Fire",
+	Metric:      warcraftlogs.CharacterRankingMetricTypeDps,
+})
 ```
 
 Events are paginated. `ReportEventsAll` follows the cursor for you and yields
@@ -289,9 +320,9 @@ Helpers classify errors returned by any method:
 if _, err := client.Report(ctx, code, false); err != nil {
 	switch {
 	case warcraftlogs.IsRateLimited(err):
-		// HTTP 429, or the GraphQL equivalent.
+		// HTTP 429.
 	case warcraftlogs.IsUnauthorized(err):
-		// Missing, expired, or insufficient credentials.
+		// HTTP 401 or 403.
 	case warcraftlogs.IsBlocked(err):
 		// Cloudflare served a challenge page; the request never reached the API.
 		var cdn *warcraftlogs.CDNError
@@ -308,8 +339,10 @@ if _, err := client.Report(ctx, code, false); err != nil {
 }
 ```
 
-`ErrorCode` returns the `code` or `category` extension of the first GraphQL
-error carrying one, so you can branch without matching on message text.
+The classifiers key off HTTP status only. The API sends no `extensions` on its
+GraphQL errors and reports a report you may not read as though it does not
+exist, so a failure that carries only a GraphQL error is not classifiable
+beyond its message. Read `GraphQLErrors` directly for those.
 
 ### Client options
 
@@ -321,6 +354,7 @@ error carrying one, so you can branch without matching on message text.
 | `WithTokenSource(ts)` | Authenticate with a caller-provided `oauth2.TokenSource`. |
 | `WithHTTPClient(hc)` | Use a preconfigured `*http.Client` verbatim. |
 | `WithEndpoint(url)` | Override the GraphQL endpoint (e.g. `UserEndpoint`). |
+| `WithTokenURL(url)` | Override the OAuth token endpoint (default `TokenURL`). |
 | `WithScopes(scopes...)` | Scopes for the client-credentials flow. |
 | `WithUserAgent(ua)` | Set the `User-Agent` header. |
 | `WithMaxRetries(n)` | Retry attempts for 429/5xx responses (default 3). |

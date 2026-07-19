@@ -2,31 +2,12 @@ package warcraftlogs
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
-
-	"github.com/Khan/genqlient/graphql"
 )
 
 func TestReportActorsSendsFilterAndUnwraps(t *testing.T) {
-	var vars map[string]any
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			Variables map[string]any `json:"variables"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			t.Errorf("decoding request: %v", err)
-		}
-		vars = req.Variables
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"data":{"reportData":{"report":{"masterData":{"actors":[
-			{"id":1,"name":"Zesyis","type":"Player","subType":"DeathKnight"}]}}}}}`)
-	}))
-	defer srv.Close()
-	client := &Client{gql: graphql.NewClient(srv.URL, srv.Client()), endpoint: srv.URL}
+	client, srv := newStubGQL(t, `{"data":{"reportData":{"report":{"masterData":{"actors":[
+		{"id":1,"name":"Zesyis","type":"Player","subType":"DeathKnight"}]}}}}}`)
 
 	actors, err := client.ReportActors(context.Background(), ReportActorsParams{
 		Code: "abc", Type: ActorPlayer, SubType: "DeathKnight",
@@ -37,34 +18,54 @@ func TestReportActorsSendsFilterAndUnwraps(t *testing.T) {
 	if len(actors) != 1 || actors[0].Name != "Zesyis" {
 		t.Fatalf("actors = %+v", actors)
 	}
-	if vars["actorType"] != "Player" || vars["actorSubType"] != "DeathKnight" {
-		t.Errorf("variables = %v, want the filter passed through", vars)
+	if srv.last()["actorType"] != "Player" || srv.last()["actorSubType"] != "DeathKnight" {
+		t.Errorf("variables = %v, want the filter passed through", srv.last())
 	}
 }
 
 // Zero-valued filters are omitted so the API returns every actor.
 func TestReportActorsOmitsEmptyFilter(t *testing.T) {
-	var vars map[string]any
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			Variables map[string]any `json:"variables"`
-		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
-		vars = req.Variables
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"data":{"reportData":{"report":{"masterData":{"actors":[]}}}}}`)
-	}))
-	defer srv.Close()
-	client := &Client{gql: graphql.NewClient(srv.URL, srv.Client()), endpoint: srv.URL}
+	client, srv := newStubGQL(t, `{"data":{"reportData":{"report":{"masterData":{"actors":[]}}}}}`)
 
 	if _, err := client.ReportActors(context.Background(), ReportActorsParams{Code: "abc"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := vars["actorType"]; ok {
-		t.Errorf("actorType was sent despite being empty: %v", vars)
+	for _, name := range []string{"actorType", "actorSubType"} {
+		if srv.sent(name) {
+			t.Errorf("%s was sent despite being empty: %v", name, srv.last())
+		}
 	}
-	if _, ok := vars["actorSubType"]; ok {
-		t.Errorf("actorSubType was sent despite being empty: %v", vars)
+}
+
+func TestReportsUnwrapsThePage(t *testing.T) {
+	client, srv := newStubGQL(t, `{"data":{"reportData":{"reports":{
+		"total":42,"perPage":10,"currentPage":2,"lastPage":5,"hasMorePages":true,
+		"from":11,"to":20,
+		"data":[{"code":"aaa","title":"Night One"},{"code":"bbb","title":"Night Two"}]}}}}`)
+
+	page, err := client.Reports(context.Background(), ReportsParams{
+		GuildName: "Skill Issue", GuildServerSlug: "tarren-mill", GuildServerRegion: "eu", Page: 2,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if page.Total != 42 || page.PerPage != 10 || page.CurrentPage != 2 || page.LastPage != 5 {
+		t.Errorf("envelope = %+v", page)
+	}
+	if !page.HasMorePages {
+		t.Error("HasMorePages = false, want true")
+	}
+	if len(page.Data) != 2 || page.Data[0].Code != "aaa" {
+		t.Errorf("data = %+v", page.Data)
+	}
+	if srv.last()["guildName"] != "Skill Issue" || srv.last()["guildServerRegion"] != "eu" {
+		t.Errorf("variables = %v", srv.last())
+	}
+	// Unset guild identifiers must not narrow the query.
+	for _, name := range []string{"guildID", "guildTagID", "userID", "zoneID"} {
+		if srv.sent(name) {
+			t.Errorf("%s was sent despite being zero: %v", name, srv.last())
+		}
 	}
 }
 

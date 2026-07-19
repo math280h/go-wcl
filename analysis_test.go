@@ -5,46 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/http/httptest"
+	"strings"
 	"testing"
-
-	"github.com/Khan/genqlient/graphql"
 )
-
-// eventServer serves one canned GraphQL response per request, in order, and
-// records the startTime variable each request asked for.
-type eventServer struct {
-	bodies []string
-	starts []float64
-	calls  int
-}
-
-func (s *eventServer) client(t *testing.T) *Client {
-	t.Helper()
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var req struct {
-			Variables struct {
-				StartTime float64 `json:"startTime"`
-			} `json:"variables"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			t.Errorf("decoding request: %v", err)
-		}
-		s.starts = append(s.starts, req.Variables.StartTime)
-
-		if s.calls >= len(s.bodies) {
-			t.Errorf("unexpected request %d, only %d responses canned", s.calls+1, len(s.bodies))
-			http.Error(w, "no more responses", http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, s.bodies[s.calls])
-		s.calls++
-	}))
-	t.Cleanup(srv.Close)
-	return &Client{gql: graphql.NewClient(srv.URL, srv.Client()), endpoint: srv.URL}
-}
 
 // page builds a getReportEvents response carrying data and a next cursor.
 func page(data string, next float64) string {
@@ -68,12 +31,11 @@ func collect(t *testing.T, seq func(func(json.RawMessage, error) bool)) ([]strin
 }
 
 func TestReportEventsAllFollowsPages(t *testing.T) {
-	srv := &eventServer{bodies: []string{
+	client, srv := newStubGQL(t,
 		page(`[{"n":1},{"n":2}]`, 500),
 		page(`[{"n":3}]`, 900),
 		page(`[{"n":4}]`, 0),
-	}}
-	client := srv.client(t)
+	)
 
 	got, err := collect(t, client.ReportEventsAll(context.Background(), EventDataTypeDeaths,
 		ReportEventsParams{Code: "abc", FightIDs: []int{1}}))
@@ -91,17 +53,16 @@ func TestReportEventsAllFollowsPages(t *testing.T) {
 		}
 	}
 	// The cursor from each page becomes the next request's StartTime.
-	if want := []float64{0, 500, 900}; !equalFloats(srv.starts, want) {
-		t.Errorf("startTimes = %v, want %v", srv.starts, want)
+	if want := []float64{0, 500, 900}; !equalFloats(srv.variable("startTime"), want) {
+		t.Errorf("startTimes = %v, want %v", srv.variable("startTime"), want)
 	}
 }
 
 func TestReportEventsAllStopsOnNonAdvancingCursor(t *testing.T) {
-	srv := &eventServer{bodies: []string{
+	client, srv := newStubGQL(t,
 		page(`[{"n":1}]`, 500),
 		page(`[{"n":2}]`, 500), // same cursor again
-	}}
-	client := srv.client(t)
+	)
 
 	got, err := collect(t, client.ReportEventsAll(context.Background(), EventDataTypeDeaths,
 		ReportEventsParams{Code: "abc", FightIDs: []int{1}}))
@@ -111,14 +72,13 @@ func TestReportEventsAllStopsOnNonAdvancingCursor(t *testing.T) {
 	if len(got) != 2 {
 		t.Errorf("got %d events, want the 2 from before the stall", len(got))
 	}
-	if srv.calls != 2 {
-		t.Errorf("calls = %d, want 2 (must not keep re-requesting)", srv.calls)
+	if srv.calls() != 2 {
+		t.Errorf("calls = %d, want 2 (must not keep re-requesting)", srv.calls())
 	}
 }
 
 func TestReportEventsAllStopsOnBreak(t *testing.T) {
-	srv := &eventServer{bodies: []string{page(`[{"n":1},{"n":2}]`, 500)}}
-	client := srv.client(t)
+	client, srv := newStubGQL(t, page(`[{"n":1},{"n":2}]`, 500))
 
 	count := 0
 	for _, err := range client.ReportEventsAll(context.Background(), EventDataTypeDeaths,
@@ -132,16 +92,15 @@ func TestReportEventsAllStopsOnBreak(t *testing.T) {
 	if count != 1 {
 		t.Errorf("yielded %d events after break, want 1", count)
 	}
-	if srv.calls != 1 {
-		t.Errorf("calls = %d, want 1 (break must not fetch the next page)", srv.calls)
+	if srv.calls() != 1 {
+		t.Errorf("calls = %d, want 1 (break must not fetch the next page)", srv.calls())
 	}
 }
 
 func TestReportEventsAllPropagatesErrors(t *testing.T) {
-	srv := &eventServer{bodies: []string{
+	client, _ := newStubGQL(t,
 		`{"errors":[{"message":"This report does not exist."}]}`,
-	}}
-	client := srv.client(t)
+	)
 
 	got, err := collect(t, client.ReportEventsAll(context.Background(), EventDataTypeDeaths,
 		ReportEventsParams{Code: "abc", FightIDs: []int{1}}))
@@ -158,8 +117,7 @@ func TestReportEventsAllPropagatesErrors(t *testing.T) {
 
 // A null data field is not an error; it just ends the iteration.
 func TestReportEventsAllHandlesEmptyPage(t *testing.T) {
-	srv := &eventServer{bodies: []string{page(`null`, 0)}}
-	client := srv.client(t)
+	client, _ := newStubGQL(t, page(`null`, 0))
 
 	got, err := collect(t, client.ReportEventsAll(context.Background(), EventDataTypeDeaths,
 		ReportEventsParams{Code: "abc", FightIDs: []int{1}}))
@@ -168,6 +126,39 @@ func TestReportEventsAllHandlesEmptyPage(t *testing.T) {
 	}
 	if got != nil {
 		t.Errorf("got %v, want no events", got)
+	}
+}
+
+func TestEncounterLeaderboard(t *testing.T) {
+	client, srv := newStubGQL(t,
+		`{"data":{"worldData":{"encounter":{"characterRankings":{"rankings":[{"name":"Xanttcha"}]}}}}}`)
+
+	raw, err := client.EncounterLeaderboard(context.Background(), EncounterLeaderboardParams{
+		EncounterID: 3009,
+		ClassName:   "Mage", SpecName: "Fire", Metric: CharacterRankingMetricTypeDps,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), "Xanttcha") {
+		t.Errorf("rankings = %s", raw)
+	}
+	if srv.last()["id"] != float64(3009) || srv.last()["className"] != "Mage" || srv.last()["specName"] != "Fire" {
+		t.Errorf("variables = %v", srv.last())
+	}
+	for _, name := range []string{"difficulty", "page", "serverSlug", "filter"} {
+		if srv.sent(name) {
+			t.Errorf("%s was sent despite being zero: %v", name, srv.last())
+		}
+	}
+}
+
+func TestEncounterLeaderboardNotFound(t *testing.T) {
+	client, _ := newStubGQL(t, `{"data":{"worldData":{"encounter":null}}}`)
+
+	_, err := client.EncounterLeaderboard(context.Background(), EncounterLeaderboardParams{EncounterID: 1})
+	if !errors.Is(err, ErrNotFound) {
+		t.Errorf("err = %v, want ErrNotFound", err)
 	}
 }
 
