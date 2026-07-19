@@ -28,6 +28,43 @@ query getEncounter($id: Int!) {
   }
 }
 
+# @genqlient(omitempty: true)
+query getEncounterCharacterRankings(
+  $id: Int!
+  $difficulty: Int
+  $className: String
+  $specName: String
+  $metric: CharacterRankingMetricType
+  $page: Int
+  $partition: Int
+  $bracket: Int
+  $size: Int
+  $serverRegion: String
+  $serverSlug: String
+  $filter: String
+  $includeCombatantInfo: Boolean
+) {
+  worldData {
+    # @genqlient(pointer: true)
+    encounter(id: $id) {
+      characterRankings(
+        difficulty: $difficulty
+        className: $className
+        specName: $specName
+        metric: $metric
+        page: $page
+        partition: $partition
+        bracket: $bracket
+        size: $size
+        serverRegion: $serverRegion
+        serverSlug: $serverSlug
+        filter: $filter
+        includeCombatantInfo: $includeCombatantInfo
+      )
+    }
+  }
+}
+
 query getExpansions {
   worldData {
     # @genqlient(flatten: true)

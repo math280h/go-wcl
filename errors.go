@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/Khan/genqlient/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -110,59 +109,25 @@ func HTTPStatus(err error) (int, bool) {
 	return 0, false
 }
 
-// ErrorCode returns the "code" or "category" extension of the first GraphQL
-// error carrying one, or "" if there is none.
-func ErrorCode(err error) string {
-	for _, ge := range GraphQLErrors(err) {
-		for _, key := range []string{"code", "category"} {
-			if s, ok := ge.Extensions[key].(string); ok && s != "" {
-				return s
-			}
-		}
-	}
-	return ""
-}
-
 // IsBlocked reports whether the request was rejected by the CDN in front of the
 // API rather than reaching it. See [CDNError].
 func IsBlocked(err error) bool { return errors.Is(err, ErrBlocked) }
 
-// IsRateLimited reports whether err was caused by exhausting the hourly point
-// budget, reported either as an HTTP 429 or as a GraphQL error.
+// IsRateLimited reports whether err was caused by an HTTP 429 response.
 func IsRateLimited(err error) bool {
 	if IsBlocked(err) {
 		return false
 	}
-	if code, ok := HTTPStatus(err); ok && code == http.StatusTooManyRequests {
-		return true
-	}
-	return hasGraphQLMessage(err, "exhausted", "rate limit")
+	code, ok := HTTPStatus(err)
+	return ok && code == http.StatusTooManyRequests
 }
 
-// IsUnauthorized reports whether err was caused by missing, expired or
-// insufficient credentials, reported either as an HTTP 401 or 403 or as a
-// GraphQL error. A CDN challenge is not an auth failure, so [IsBlocked] takes
-// precedence.
+// IsUnauthorized reports whether err was caused by an HTTP 401 or 403 response.
+// A CDN challenge is not an auth failure, so [IsBlocked] takes precedence.
 func IsUnauthorized(err error) bool {
 	if IsBlocked(err) {
 		return false
 	}
-	if code, ok := HTTPStatus(err); ok && (code == http.StatusUnauthorized || code == http.StatusForbidden) {
-		return true
-	}
-	return hasGraphQLMessage(err, "do not have permission", "unauthenticated", "unauthorized")
-}
-
-// hasGraphQLMessage matches GraphQL error text case-insensitively. The API does
-// not classify these errors in extensions, so the message is all there is.
-func hasGraphQLMessage(err error, substrings ...string) bool {
-	for _, ge := range GraphQLErrors(err) {
-		msg := strings.ToLower(ge.Message)
-		for _, s := range substrings {
-			if strings.Contains(msg, s) {
-				return true
-			}
-		}
-	}
-	return false
+	code, ok := HTTPStatus(err)
+	return ok && (code == http.StatusUnauthorized || code == http.StatusForbidden)
 }

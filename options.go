@@ -19,6 +19,7 @@ type Option func(*options)
 
 type options struct {
 	endpoint      string
+	tokenURL      string
 	userAgent     string
 	maxRetries    int
 	timeout       time.Duration
@@ -34,6 +35,7 @@ type options struct {
 func defaultOptions() *options {
 	return &options{
 		endpoint:   ClientEndpoint,
+		tokenURL:   TokenURL,
 		userAgent:  defaultUserAgent,
 		maxRetries: 3,
 		timeout:    60 * time.Second,
@@ -68,6 +70,12 @@ func WithHTTPClient(hc *http.Client) Option {
 // region-specific host.
 func WithEndpoint(url string) Option {
 	return func(o *options) { o.endpoint = url }
+}
+
+// WithTokenURL overrides the OAuth 2.0 token endpoint used by
+// [WithClientCredentials]. Defaults to [TokenURL].
+func WithTokenURL(url string) Option {
+	return func(o *options) { o.tokenURL = url }
 }
 
 // WithScopes sets the OAuth scopes requested by the client-credentials flow.
@@ -127,7 +135,7 @@ func (o *options) httpClientFor(ctx context.Context) (*http.Client, error) {
 		cc := clientcredentials.Config{
 			ClientID:     o.clientID,
 			ClientSecret: o.clientSecret,
-			TokenURL:     TokenURL,
+			TokenURL:     o.tokenURL,
 			Scopes:       o.scopes,
 			AuthStyle:    oauth2.AuthStyleInHeader,
 		}

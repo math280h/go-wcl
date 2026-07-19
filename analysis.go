@@ -86,6 +86,42 @@ func (c *Client) CharacterEncounterRankings(ctx context.Context, p EncounterRank
 	return character.EncounterRankings, nil
 }
 
+// EncounterLeaderboardParams selects the leaderboard returned by
+// [Client.EncounterLeaderboard]. EncounterID is required; other zero fields are
+// omitted.
+type EncounterLeaderboardParams struct {
+	EncounterID          int
+	Difficulty           int
+	ClassName            string
+	SpecName             string
+	Metric               CharacterRankingMetricType
+	Page                 int
+	Partition            int
+	Bracket              int
+	Size                 int
+	ServerRegion         string
+	ServerSlug           string
+	Filter               string
+	IncludeCombatantInfo bool
+}
+
+// EncounterLeaderboard returns an encounter's top-ranked characters as raw
+// JSON. This is the inverse of [Client.CharacterEncounterRankings], which ranks
+// one named character. It returns [ErrNotFound] if no encounter matches.
+func (c *Client) EncounterLeaderboard(ctx context.Context, p EncounterLeaderboardParams) (json.RawMessage, error) {
+	resp, err := getEncounterCharacterRankings(ctx, c.gql, p.EncounterID,
+		p.Difficulty, p.ClassName, p.SpecName, p.Metric, p.Page, p.Partition,
+		p.Bracket, p.Size, p.ServerRegion, p.ServerSlug, p.Filter, p.IncludeCombatantInfo)
+	if err != nil {
+		return nil, err
+	}
+	encounter, err := orNotFound(resp.WorldData.Encounter)
+	if err != nil {
+		return nil, err
+	}
+	return encounter.CharacterRankings, nil
+}
+
 // ReportAnalysisParams filters the [Client.ReportTable] and [Client.ReportGraph]
 // queries. Code is required; other zero fields are omitted. For arguments not
 // exposed here, use [Client.Execute].

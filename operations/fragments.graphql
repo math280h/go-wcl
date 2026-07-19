@@ -252,6 +252,22 @@ fragment ReportFight on ReportFight {
   }
 }
 
+# Aliased because the schema spells these snake_case, which would otherwise
+# generate Go fields like Per_page.
+fragment ReportPage on ReportPagination {
+  total
+  perPage: per_page
+  currentPage: current_page
+  lastPage: last_page
+  hasMorePages: has_more_pages
+  from
+  to
+  # @genqlient(flatten: true)
+  data {
+    ...Report
+  }
+}
+
 fragment ReportActor on ReportActor {
   gameID
   id
