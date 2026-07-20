@@ -22,6 +22,10 @@ const (
 // ErrNoCredentials is returned by [New] when no authentication is configured.
 var ErrNoCredentials = errors.New("warcraftlogs: no credentials configured (use WithClientCredentials, WithTokenSource, or WithHTTPClient)")
 
+// ErrConflictingOptions is returned by [New] when [WithHTTPClient] is combined
+// with an option it would override.
+var ErrConflictingOptions = errors.New("warcraftlogs: WithHTTPClient supersedes other auth and transport options")
+
 // Client is a Warcraft Logs API client. It is safe for concurrent use.
 type Client struct {
 	gql      graphql.Client

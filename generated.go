@@ -692,6 +692,23 @@ func (v *Guild) GetFaction() Faction { return v.Faction }
 // GetServer returns Guild.Server, and is useful for accessing the field via an interface.
 func (v *Guild) GetServer() Server { return v.Server }
 
+// GuildSummary includes the GraphQL fields of Guild requested by the fragment GuildSummary.
+// The GraphQL type's documentation follows.
+//
+// A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings.
+type GuildSummary struct {
+	// The ID of the guild.
+	Id int `json:"id"`
+	// The name of the guild.
+	Name string `json:"name"`
+}
+
+// GetId returns GuildSummary.Id, and is useful for accessing the field via an interface.
+func (v *GuildSummary) GetId() int { return v.Id }
+
+// GetName returns GuildSummary.Name, and is useful for accessing the field via an interface.
+func (v *GuildSummary) GetName() string { return v.Name }
+
 // Whether or not to fetch information for friendlies or enemies.
 type HostilityType string
 
@@ -902,14 +919,7 @@ func (v *RegionSummary) GetCompactName() string { return v.CompactName }
 //
 // A single report uploaded by a player to a guild or personal logs.
 type Report struct {
-	// The report code, a unique value used to identify the report.
-	Code string `json:"code"`
-	// A title for the report.
-	Title string `json:"title"`
-	// The start time of the report. This is a UNIX timestamp representing the timestamp of the first event contained in the report.
-	StartTime float64 `json:"startTime"`
-	// The end time of the report. This is a UNIX timestamp representing the timestamp of the last event contained in the report.
-	EndTime float64 `json:"endTime"`
+	ReportSummary `json:"-"`
 	// The visibility level of the report. The possible values are 'public', 'private', and 'unlisted'.
 	Visibility string `json:"visibility"`
 	// The revision of the report. This number is increased when reports get re-exported.
@@ -918,29 +928,11 @@ type Report struct {
 	Segments int `json:"segments"`
 	// The number of exported segments in the report. This is how many segments have been processed for rankings.
 	ExportedSegments int `json:"exportedSegments"`
-	// The principal zone that the report contains fights for. Null if no supported zone exists.
-	Zone ZoneSummary `json:"zone"`
-	// The guild that the report belongs to. If this is null, then the report was uploaded to the user's personal logs.
-	Guild ReportGuild `json:"guild"`
-	// The user that uploaded the report.
-	Owner User `json:"owner"`
 	// The region of the report.
 	Region ReportRegion `json:"region"`
 	// Whether this report has been archived. Events, tables, and graphs for archived reports are inaccessible unless the retrieving user has a subscription including archive access.
 	ArchiveStatus ReportArchiveStatus `json:"archiveStatus"`
 }
-
-// GetCode returns Report.Code, and is useful for accessing the field via an interface.
-func (v *Report) GetCode() string { return v.Code }
-
-// GetTitle returns Report.Title, and is useful for accessing the field via an interface.
-func (v *Report) GetTitle() string { return v.Title }
-
-// GetStartTime returns Report.StartTime, and is useful for accessing the field via an interface.
-func (v *Report) GetStartTime() float64 { return v.StartTime }
-
-// GetEndTime returns Report.EndTime, and is useful for accessing the field via an interface.
-func (v *Report) GetEndTime() float64 { return v.EndTime }
 
 // GetVisibility returns Report.Visibility, and is useful for accessing the field via an interface.
 func (v *Report) GetVisibility() string { return v.Visibility }
@@ -954,20 +946,139 @@ func (v *Report) GetSegments() int { return v.Segments }
 // GetExportedSegments returns Report.ExportedSegments, and is useful for accessing the field via an interface.
 func (v *Report) GetExportedSegments() int { return v.ExportedSegments }
 
-// GetZone returns Report.Zone, and is useful for accessing the field via an interface.
-func (v *Report) GetZone() ZoneSummary { return v.Zone }
-
-// GetGuild returns Report.Guild, and is useful for accessing the field via an interface.
-func (v *Report) GetGuild() ReportGuild { return v.Guild }
-
-// GetOwner returns Report.Owner, and is useful for accessing the field via an interface.
-func (v *Report) GetOwner() User { return v.Owner }
-
 // GetRegion returns Report.Region, and is useful for accessing the field via an interface.
 func (v *Report) GetRegion() ReportRegion { return v.Region }
 
 // GetArchiveStatus returns Report.ArchiveStatus, and is useful for accessing the field via an interface.
 func (v *Report) GetArchiveStatus() ReportArchiveStatus { return v.ArchiveStatus }
+
+// GetCode returns Report.Code, and is useful for accessing the field via an interface.
+func (v *Report) GetCode() string { return v.ReportSummary.Code }
+
+// GetTitle returns Report.Title, and is useful for accessing the field via an interface.
+func (v *Report) GetTitle() string { return v.ReportSummary.Title }
+
+// GetStartTime returns Report.StartTime, and is useful for accessing the field via an interface.
+func (v *Report) GetStartTime() float64 { return v.ReportSummary.StartTime }
+
+// GetEndTime returns Report.EndTime, and is useful for accessing the field via an interface.
+func (v *Report) GetEndTime() float64 { return v.ReportSummary.EndTime }
+
+// GetZone returns Report.Zone, and is useful for accessing the field via an interface.
+func (v *Report) GetZone() ZoneSummary { return v.ReportSummary.Zone }
+
+// GetGuild returns Report.Guild, and is useful for accessing the field via an interface.
+func (v *Report) GetGuild() GuildSummary { return v.ReportSummary.Guild }
+
+// GetOwner returns Report.Owner, and is useful for accessing the field via an interface.
+func (v *Report) GetOwner() User { return v.ReportSummary.Owner }
+
+func (v *Report) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*Report
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.Report = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.ReportSummary)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalReport struct {
+	Visibility string `json:"visibility"`
+
+	Revision int `json:"revision"`
+
+	Segments int `json:"segments"`
+
+	ExportedSegments int `json:"exportedSegments"`
+
+	Region ReportRegion `json:"region"`
+
+	ArchiveStatus ReportArchiveStatus `json:"archiveStatus"`
+
+	Code string `json:"code"`
+
+	Title string `json:"title"`
+
+	StartTime float64 `json:"startTime"`
+
+	EndTime float64 `json:"endTime"`
+
+	Zone ZoneSummary `json:"zone"`
+
+	Guild GuildSummary `json:"guild"`
+
+	Owner User `json:"owner"`
+}
+
+func (v *Report) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *Report) __premarshalJSON() (*__premarshalReport, error) {
+	var retval __premarshalReport
+
+	retval.Visibility = v.Visibility
+	retval.Revision = v.Revision
+	retval.Segments = v.Segments
+	retval.ExportedSegments = v.ExportedSegments
+	retval.Region = v.Region
+	retval.ArchiveStatus = v.ArchiveStatus
+	retval.Code = v.ReportSummary.Code
+	retval.Title = v.ReportSummary.Title
+	retval.StartTime = v.ReportSummary.StartTime
+	retval.EndTime = v.ReportSummary.EndTime
+	retval.Zone = v.ReportSummary.Zone
+	retval.Guild = v.ReportSummary.Guild
+	retval.Owner = v.ReportSummary.Owner
+	return &retval, nil
+}
+
+// ReportAbility includes the GraphQL fields of ReportAbility requested by the fragment ReportAbility.
+// The GraphQL type's documentation follows.
+//
+// The ReportAbility represents a single ability that occurs in the report.
+type ReportAbility struct {
+	// The game ID of the ability.
+	GameID float64 `json:"gameID"`
+	// An icon to use for the ability.
+	Icon string `json:"icon"`
+	// The name of the actor.
+	Name string `json:"name"`
+	// The type of the ability. This represents the type of damage (e.g., the spell school in WoW).
+	Type string `json:"type"`
+}
+
+// GetGameID returns ReportAbility.GameID, and is useful for accessing the field via an interface.
+func (v *ReportAbility) GetGameID() float64 { return v.GameID }
+
+// GetIcon returns ReportAbility.Icon, and is useful for accessing the field via an interface.
+func (v *ReportAbility) GetIcon() string { return v.Icon }
+
+// GetName returns ReportAbility.Name, and is useful for accessing the field via an interface.
+func (v *ReportAbility) GetName() string { return v.Name }
+
+// GetType returns ReportAbility.Type, and is useful for accessing the field via an interface.
+func (v *ReportAbility) GetType() string { return v.Type }
 
 // ReportActor includes the GraphQL fields of ReportActor requested by the fragment ReportActor.
 // The GraphQL type's documentation follows.
@@ -1173,23 +1284,6 @@ func (v *ReportFight) GetPhaseTransitions() []PhaseTransition { return v.PhaseTr
 // GetGameZone returns ReportFight.GameZone, and is useful for accessing the field via an interface.
 func (v *ReportFight) GetGameZone() GameZoneSummary { return v.GameZone }
 
-// ReportGuild includes the requested fields of the GraphQL type Guild.
-// The GraphQL type's documentation follows.
-//
-// A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings.
-type ReportGuild struct {
-	// The ID of the guild.
-	Id int `json:"id"`
-	// The name of the guild.
-	Name string `json:"name"`
-}
-
-// GetId returns ReportGuild.Id, and is useful for accessing the field via an interface.
-func (v *ReportGuild) GetId() int { return v.Id }
-
-// GetName returns ReportGuild.Name, and is useful for accessing the field via an interface.
-func (v *ReportGuild) GetName() string { return v.Name }
-
 // ReportMasterData includes the GraphQL fields of ReportMasterData requested by the fragment ReportMasterData.
 // The GraphQL type's documentation follows.
 //
@@ -1202,7 +1296,7 @@ type ReportMasterData struct {
 	// The auto-detected locale of the report. This is the source language of the original log file.
 	Lang string `json:"lang"`
 	// A list of every ability that occurs in the report.
-	Abilities []ReportMasterDataAbilitiesReportAbility `json:"abilities"`
+	Abilities []ReportAbility `json:"abilities"`
 	// A list of every actor (player, NPC, pet) that occurs in the report.
 	Actors []ReportActor `json:"actors"`
 }
@@ -1217,39 +1311,10 @@ func (v *ReportMasterData) GetGameVersion() int { return v.GameVersion }
 func (v *ReportMasterData) GetLang() string { return v.Lang }
 
 // GetAbilities returns ReportMasterData.Abilities, and is useful for accessing the field via an interface.
-func (v *ReportMasterData) GetAbilities() []ReportMasterDataAbilitiesReportAbility {
-	return v.Abilities
-}
+func (v *ReportMasterData) GetAbilities() []ReportAbility { return v.Abilities }
 
 // GetActors returns ReportMasterData.Actors, and is useful for accessing the field via an interface.
 func (v *ReportMasterData) GetActors() []ReportActor { return v.Actors }
-
-// ReportMasterDataAbilitiesReportAbility includes the requested fields of the GraphQL type ReportAbility.
-// The GraphQL type's documentation follows.
-//
-// The ReportAbility represents a single ability that occurs in the report.
-type ReportMasterDataAbilitiesReportAbility struct {
-	// The game ID of the ability.
-	GameID float64 `json:"gameID"`
-	// An icon to use for the ability.
-	Icon string `json:"icon"`
-	// The name of the actor.
-	Name string `json:"name"`
-	// The type of the ability. This represents the type of damage (e.g., the spell school in WoW).
-	Type string `json:"type"`
-}
-
-// GetGameID returns ReportMasterDataAbilitiesReportAbility.GameID, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataAbilitiesReportAbility) GetGameID() float64 { return v.GameID }
-
-// GetIcon returns ReportMasterDataAbilitiesReportAbility.Icon, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataAbilitiesReportAbility) GetIcon() string { return v.Icon }
-
-// GetName returns ReportMasterDataAbilitiesReportAbility.Name, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataAbilitiesReportAbility) GetName() string { return v.Name }
-
-// GetType returns ReportMasterDataAbilitiesReportAbility.Type, and is useful for accessing the field via an interface.
-func (v *ReportMasterDataAbilitiesReportAbility) GetType() string { return v.Type }
 
 // Aliased because the schema spells these snake_case, which would otherwise
 // generate Go fields like Per_page.
@@ -1269,7 +1334,7 @@ type ReportPage struct {
 	// Number of the last item returned
 	To int `json:"to"`
 	// List of items on the current page
-	Data []Report `json:"data"`
+	Data []ReportSummary `json:"data"`
 }
 
 // GetTotal returns ReportPage.Total, and is useful for accessing the field via an interface.
@@ -1294,7 +1359,7 @@ func (v *ReportPage) GetFrom() int { return v.From }
 func (v *ReportPage) GetTo() int { return v.To }
 
 // GetData returns ReportPage.Data, and is useful for accessing the field via an interface.
-func (v *ReportPage) GetData() []Report { return v.Data }
+func (v *ReportPage) GetData() []ReportSummary { return v.Data }
 
 // All the possible metrics.
 type ReportRankingMetricType string
@@ -1366,6 +1431,46 @@ func (v *ReportRegion) GetId() int { return v.Id }
 
 // GetName returns ReportRegion.Name, and is useful for accessing the field via an interface.
 func (v *ReportRegion) GetName() string { return v.Name }
+
+// The fields a listing needs. Spread this rather than Report where the selection
+// is repeated per row.
+type ReportSummary struct {
+	// The report code, a unique value used to identify the report.
+	Code string `json:"code"`
+	// A title for the report.
+	Title string `json:"title"`
+	// The start time of the report. This is a UNIX timestamp representing the timestamp of the first event contained in the report.
+	StartTime float64 `json:"startTime"`
+	// The end time of the report. This is a UNIX timestamp representing the timestamp of the last event contained in the report.
+	EndTime float64 `json:"endTime"`
+	// The principal zone that the report contains fights for. Null if no supported zone exists.
+	Zone ZoneSummary `json:"zone"`
+	// The guild that the report belongs to. If this is null, then the report was uploaded to the user's personal logs.
+	Guild GuildSummary `json:"guild"`
+	// The user that uploaded the report.
+	Owner User `json:"owner"`
+}
+
+// GetCode returns ReportSummary.Code, and is useful for accessing the field via an interface.
+func (v *ReportSummary) GetCode() string { return v.Code }
+
+// GetTitle returns ReportSummary.Title, and is useful for accessing the field via an interface.
+func (v *ReportSummary) GetTitle() string { return v.Title }
+
+// GetStartTime returns ReportSummary.StartTime, and is useful for accessing the field via an interface.
+func (v *ReportSummary) GetStartTime() float64 { return v.StartTime }
+
+// GetEndTime returns ReportSummary.EndTime, and is useful for accessing the field via an interface.
+func (v *ReportSummary) GetEndTime() float64 { return v.EndTime }
+
+// GetZone returns ReportSummary.Zone, and is useful for accessing the field via an interface.
+func (v *ReportSummary) GetZone() ZoneSummary { return v.Zone }
+
+// GetGuild returns ReportSummary.Guild, and is useful for accessing the field via an interface.
+func (v *ReportSummary) GetGuild() GuildSummary { return v.Guild }
+
+// GetOwner returns ReportSummary.Owner, and is useful for accessing the field via an interface.
+func (v *ReportSummary) GetOwner() User { return v.Owner }
 
 // Used to specify a tank, healer or DPS role.
 type RoleType string
@@ -3140,18 +3245,6 @@ func (v *getReportWithFightsReportDataReport) GetFights() []ReportFight { return
 // GetPhases returns getReportWithFightsReportDataReport.Phases, and is useful for accessing the field via an interface.
 func (v *getReportWithFightsReportDataReport) GetPhases() []EncounterPhases { return v.Phases }
 
-// GetCode returns getReportWithFightsReportDataReport.Code, and is useful for accessing the field via an interface.
-func (v *getReportWithFightsReportDataReport) GetCode() string { return v.Report.Code }
-
-// GetTitle returns getReportWithFightsReportDataReport.Title, and is useful for accessing the field via an interface.
-func (v *getReportWithFightsReportDataReport) GetTitle() string { return v.Report.Title }
-
-// GetStartTime returns getReportWithFightsReportDataReport.StartTime, and is useful for accessing the field via an interface.
-func (v *getReportWithFightsReportDataReport) GetStartTime() float64 { return v.Report.StartTime }
-
-// GetEndTime returns getReportWithFightsReportDataReport.EndTime, and is useful for accessing the field via an interface.
-func (v *getReportWithFightsReportDataReport) GetEndTime() float64 { return v.Report.EndTime }
-
 // GetVisibility returns getReportWithFightsReportDataReport.Visibility, and is useful for accessing the field via an interface.
 func (v *getReportWithFightsReportDataReport) GetVisibility() string { return v.Report.Visibility }
 
@@ -3166,15 +3259,6 @@ func (v *getReportWithFightsReportDataReport) GetExportedSegments() int {
 	return v.Report.ExportedSegments
 }
 
-// GetZone returns getReportWithFightsReportDataReport.Zone, and is useful for accessing the field via an interface.
-func (v *getReportWithFightsReportDataReport) GetZone() ZoneSummary { return v.Report.Zone }
-
-// GetGuild returns getReportWithFightsReportDataReport.Guild, and is useful for accessing the field via an interface.
-func (v *getReportWithFightsReportDataReport) GetGuild() ReportGuild { return v.Report.Guild }
-
-// GetOwner returns getReportWithFightsReportDataReport.Owner, and is useful for accessing the field via an interface.
-func (v *getReportWithFightsReportDataReport) GetOwner() User { return v.Report.Owner }
-
 // GetRegion returns getReportWithFightsReportDataReport.Region, and is useful for accessing the field via an interface.
 func (v *getReportWithFightsReportDataReport) GetRegion() ReportRegion { return v.Report.Region }
 
@@ -3182,6 +3266,35 @@ func (v *getReportWithFightsReportDataReport) GetRegion() ReportRegion { return 
 func (v *getReportWithFightsReportDataReport) GetArchiveStatus() ReportArchiveStatus {
 	return v.Report.ArchiveStatus
 }
+
+// GetCode returns getReportWithFightsReportDataReport.Code, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetCode() string { return v.Report.ReportSummary.Code }
+
+// GetTitle returns getReportWithFightsReportDataReport.Title, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetTitle() string { return v.Report.ReportSummary.Title }
+
+// GetStartTime returns getReportWithFightsReportDataReport.StartTime, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetStartTime() float64 {
+	return v.Report.ReportSummary.StartTime
+}
+
+// GetEndTime returns getReportWithFightsReportDataReport.EndTime, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetEndTime() float64 {
+	return v.Report.ReportSummary.EndTime
+}
+
+// GetZone returns getReportWithFightsReportDataReport.Zone, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetZone() ZoneSummary {
+	return v.Report.ReportSummary.Zone
+}
+
+// GetGuild returns getReportWithFightsReportDataReport.Guild, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetGuild() GuildSummary {
+	return v.Report.ReportSummary.Guild
+}
+
+// GetOwner returns getReportWithFightsReportDataReport.Owner, and is useful for accessing the field via an interface.
+func (v *getReportWithFightsReportDataReport) GetOwner() User { return v.Report.ReportSummary.Owner }
 
 func (v *getReportWithFightsReportDataReport) UnmarshalJSON(b []byte) error {
 
@@ -3213,14 +3326,6 @@ type __premarshalgetReportWithFightsReportDataReport struct {
 
 	Phases []EncounterPhases `json:"phases"`
 
-	Code string `json:"code"`
-
-	Title string `json:"title"`
-
-	StartTime float64 `json:"startTime"`
-
-	EndTime float64 `json:"endTime"`
-
 	Visibility string `json:"visibility"`
 
 	Revision int `json:"revision"`
@@ -3229,15 +3334,23 @@ type __premarshalgetReportWithFightsReportDataReport struct {
 
 	ExportedSegments int `json:"exportedSegments"`
 
-	Zone ZoneSummary `json:"zone"`
-
-	Guild ReportGuild `json:"guild"`
-
-	Owner User `json:"owner"`
-
 	Region ReportRegion `json:"region"`
 
 	ArchiveStatus ReportArchiveStatus `json:"archiveStatus"`
+
+	Code string `json:"code"`
+
+	Title string `json:"title"`
+
+	StartTime float64 `json:"startTime"`
+
+	EndTime float64 `json:"endTime"`
+
+	Zone ZoneSummary `json:"zone"`
+
+	Guild GuildSummary `json:"guild"`
+
+	Owner User `json:"owner"`
 }
 
 func (v *getReportWithFightsReportDataReport) MarshalJSON() ([]byte, error) {
@@ -3253,19 +3366,19 @@ func (v *getReportWithFightsReportDataReport) __premarshalJSON() (*__premarshalg
 
 	retval.Fights = v.Fights
 	retval.Phases = v.Phases
-	retval.Code = v.Report.Code
-	retval.Title = v.Report.Title
-	retval.StartTime = v.Report.StartTime
-	retval.EndTime = v.Report.EndTime
 	retval.Visibility = v.Report.Visibility
 	retval.Revision = v.Report.Revision
 	retval.Segments = v.Report.Segments
 	retval.ExportedSegments = v.Report.ExportedSegments
-	retval.Zone = v.Report.Zone
-	retval.Guild = v.Report.Guild
-	retval.Owner = v.Report.Owner
 	retval.Region = v.Report.Region
 	retval.ArchiveStatus = v.Report.ArchiveStatus
+	retval.Code = v.Report.ReportSummary.Code
+	retval.Title = v.Report.ReportSummary.Title
+	retval.StartTime = v.Report.ReportSummary.StartTime
+	retval.EndTime = v.Report.ReportSummary.EndTime
+	retval.Zone = v.Report.ReportSummary.Zone
+	retval.Guild = v.Report.ReportSummary.Guild
+	retval.Owner = v.Report.ReportSummary.Owner
 	return &retval, nil
 }
 
@@ -4319,24 +4432,11 @@ query getReport ($code: String!, $allowUnlisted: Boolean) {
 	}
 }
 fragment Report on Report {
-	code
-	title
-	startTime
-	endTime
+	... ReportSummary
 	visibility
 	revision
 	segments
 	exportedSegments
-	zone {
-		... ZoneSummary
-	}
-	guild {
-		id
-		name
-	}
-	owner {
-		... User
-	}
 	region {
 		id
 		name
@@ -4347,7 +4447,26 @@ fragment Report on Report {
 		archiveDate
 	}
 }
+fragment ReportSummary on Report {
+	code
+	title
+	startTime
+	endTime
+	zone {
+		... ZoneSummary
+	}
+	guild {
+		... GuildSummary
+	}
+	owner {
+		... User
+	}
+}
 fragment ZoneSummary on Zone {
+	id
+	name
+}
+fragment GuildSummary on Guild {
 	id
 	name
 }
@@ -4585,14 +4704,17 @@ fragment ReportMasterData on ReportMasterData {
 	gameVersion
 	lang
 	abilities {
-		gameID
-		icon
-		name
-		type
+		... ReportAbility
 	}
 	actors {
 		... ReportActor
 	}
+}
+fragment ReportAbility on ReportAbility {
+	gameID
+	icon
+	name
+	type
 }
 fragment ReportActor on ReportActor {
 	gameID
@@ -4811,24 +4933,11 @@ query getReportWithFights ($code: String!, $allowUnlisted: Boolean, $encounterID
 	}
 }
 fragment Report on Report {
-	code
-	title
-	startTime
-	endTime
+	... ReportSummary
 	visibility
 	revision
 	segments
 	exportedSegments
-	zone {
-		... ZoneSummary
-	}
-	guild {
-		id
-		name
-	}
-	owner {
-		... User
-	}
 	region {
 		id
 		name
@@ -4878,13 +4987,20 @@ fragment EncounterPhases on EncounterPhases {
 		... PhaseMetadata
 	}
 }
-fragment ZoneSummary on Zone {
-	id
-	name
-}
-fragment User on User {
-	id
-	name
+fragment ReportSummary on Report {
+	code
+	title
+	startTime
+	endTime
+	zone {
+		... ZoneSummary
+	}
+	guild {
+		... GuildSummary
+	}
+	owner {
+		... User
+	}
 }
 fragment PhaseTransition on PhaseTransition {
 	id
@@ -4898,6 +5014,18 @@ fragment PhaseMetadata on PhaseMetadata {
 	id
 	name
 	isIntermission
+}
+fragment ZoneSummary on Zone {
+	id
+	name
+}
+fragment GuildSummary on Guild {
+	id
+	name
+}
+fragment User on User {
+	id
+	name
 }
 `
 
@@ -4956,39 +5084,29 @@ fragment ReportPage on ReportPagination {
 	from
 	to
 	data {
-		... Report
+		... ReportSummary
 	}
 }
-fragment Report on Report {
+fragment ReportSummary on Report {
 	code
 	title
 	startTime
 	endTime
-	visibility
-	revision
-	segments
-	exportedSegments
 	zone {
 		... ZoneSummary
 	}
 	guild {
-		id
-		name
+		... GuildSummary
 	}
 	owner {
 		... User
 	}
-	region {
-		id
-		name
-	}
-	archiveStatus {
-		isArchived
-		isAccessible
-		archiveDate
-	}
 }
 fragment ZoneSummary on Zone {
+	id
+	name
+}
+fragment GuildSummary on Guild {
 	id
 	name
 }

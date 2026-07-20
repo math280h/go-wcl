@@ -2,8 +2,10 @@ package warcraftlogs
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -30,6 +32,19 @@ type options struct {
 	httpClient    *http.Client
 	baseTransport http.RoundTripper
 	logger        *slog.Logger
+
+	// superseded names the options that WithHTTPClient would silently drop.
+	superseded []string
+}
+
+// supersedable builds an option that WithHTTPClient overrides, recording its
+// name so New can report the conflict instead of dropping it. Every option
+// except WithEndpoint and WithHTTPClient is built this way.
+func supersedable(name string, apply func(*options)) Option {
+	return func(o *options) {
+		apply(o)
+		o.superseded = append(o.superseded, name)
+	}
 }
 
 func defaultOptions() *options {
@@ -46,22 +61,23 @@ func defaultOptions() *options {
 // WithClientCredentials authenticates using the OAuth 2.0 client-credentials
 // flow against [ClientEndpoint].
 func WithClientCredentials(id, secret string) Option {
-	return func(o *options) {
+	return supersedable("WithClientCredentials", func(o *options) {
 		o.clientID = id
 		o.clientSecret = secret
-	}
+	})
 }
 
 // WithTokenSource authenticates using a caller-provided token source, such as
 // one obtained from the authorization-code or PKCE flow (see [OAuthConfig]).
 // Pair it with WithEndpoint([UserEndpoint]) to access private data.
 func WithTokenSource(ts oauth2.TokenSource) Option {
-	return func(o *options) { o.tokenSource = ts }
+	return supersedable("WithTokenSource", func(o *options) { o.tokenSource = ts })
 }
 
 // WithHTTPClient uses a fully preconfigured HTTP client verbatim, including its
-// authentication transport. When set, other auth and transport options are
-// ignored.
+// authentication transport. It supersedes every other auth and transport
+// option, so combining it with one returns [ErrConflictingOptions] rather than
+// dropping it. [WithEndpoint] still applies.
 func WithHTTPClient(hc *http.Client) Option {
 	return func(o *options) { o.httpClient = hc }
 }
@@ -75,49 +91,52 @@ func WithEndpoint(url string) Option {
 // WithTokenURL overrides the OAuth 2.0 token endpoint used by
 // [WithClientCredentials]. Defaults to [TokenURL].
 func WithTokenURL(url string) Option {
-	return func(o *options) { o.tokenURL = url }
+	return supersedable("WithTokenURL", func(o *options) { o.tokenURL = url })
 }
 
 // WithScopes sets the OAuth scopes requested by the client-credentials flow.
 func WithScopes(scopes ...string) Option {
-	return func(o *options) { o.scopes = scopes }
+	return supersedable("WithScopes", func(o *options) { o.scopes = scopes })
 }
 
 // WithUserAgent sets the User-Agent header sent with every request.
 func WithUserAgent(ua string) Option {
-	return func(o *options) { o.userAgent = ua }
+	return supersedable("WithUserAgent", func(o *options) { o.userAgent = ua })
 }
 
 // WithMaxRetries sets how many times a retryable request (HTTP 429 or 5xx) is
 // retried with exponential backoff. Zero disables retries.
 func WithMaxRetries(n int) Option {
-	return func(o *options) { o.maxRetries = n }
+	return supersedable("WithMaxRetries", func(o *options) { o.maxRetries = n })
 }
 
 // WithTimeout sets the per-request timeout of the underlying HTTP client.
 func WithTimeout(d time.Duration) Option {
-	return func(o *options) { o.timeout = d }
+	return supersedable("WithTimeout", func(o *options) { o.timeout = d })
 }
 
 // WithBaseTransport sets the http.RoundTripper beneath the retry and auth
 // layers. Defaults to http.DefaultTransport.
 func WithBaseTransport(rt http.RoundTripper) Option {
-	return func(o *options) { o.baseTransport = rt }
+	return supersedable("WithBaseTransport", func(o *options) { o.baseTransport = rt })
 }
 
 // WithLogger logs retried requests at debug level to l. Request headers are
 // never logged. Nothing is logged by default.
 func WithLogger(l *slog.Logger) Option {
-	return func(o *options) {
+	return supersedable("WithLogger", func(o *options) {
 		if l == nil {
 			l = discardLogger
 		}
 		o.logger = l
-	}
+	})
 }
 
 func (o *options) httpClientFor(ctx context.Context) (*http.Client, error) {
 	if o.httpClient != nil {
+		if len(o.superseded) > 0 {
+			return nil, fmt.Errorf("%w: remove %s", ErrConflictingOptions, strings.Join(o.superseded, ", "))
+		}
 		return o.httpClient, nil
 	}
 

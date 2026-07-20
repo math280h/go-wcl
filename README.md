@@ -149,9 +149,11 @@ for _, r := range page.Data {
 }
 ```
 
-`page.Data` holds `Report` values, the same type `Client.Report` returns. Walk
-further by incrementing `Page` while `page.HasMorePages` is true; `Total`,
-`PerPage`, `CurrentPage`, `LastPage`, `From` and `To` are also available.
+`page.Data` holds `ReportSummary` values: code, title, start and end time, zone,
+guild and owner. Call `Client.Report` or `Client.ReportWithFights` with a code
+for the rest. Walk the pages by incrementing `Page` while `page.HasMorePages` is
+true; `Total`, `PerPage`, `CurrentPage`, `LastPage`, `From` and `To` are also
+available.
 
 ### Reports and fights
 
@@ -352,7 +354,7 @@ beyond its message. Read `GraphQLErrors` directly for those.
 | --- | --- |
 | `WithClientCredentials(id, secret)` | Client-credentials authentication. |
 | `WithTokenSource(ts)` | Authenticate with a caller-provided `oauth2.TokenSource`. |
-| `WithHTTPClient(hc)` | Use a preconfigured `*http.Client` verbatim. |
+| `WithHTTPClient(hc)` | Use a preconfigured `*http.Client` verbatim. Supersedes the other auth and transport options, so combining them is an error. |
 | `WithEndpoint(url)` | Override the GraphQL endpoint (e.g. `UserEndpoint`). |
 | `WithTokenURL(url)` | Override the OAuth token endpoint (default `TokenURL`). |
 | `WithScopes(scopes...)` | Scopes for the client-credentials flow. |
