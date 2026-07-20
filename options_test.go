@@ -4,9 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
+
+	"golang.org/x/oauth2"
 )
 
 func TestWithTokenURLDrivesTheCredentialsFlow(t *testing.T) {
@@ -64,6 +69,45 @@ func TestWithTokenURLDrivesTheCredentialsFlow(t *testing.T) {
 func TestTokenURLDefaultsToTheConstant(t *testing.T) {
 	if got := defaultOptions().tokenURL; got != TokenURL {
 		t.Errorf("default tokenURL = %q, want %q", got, TokenURL)
+	}
+}
+
+func TestWithHTTPClientRejectsSupersededOptions(t *testing.T) {
+	hc := &http.Client{}
+	for _, tc := range []struct {
+		name string
+		opt  Option
+	}{
+		{"WithClientCredentials", WithClientCredentials("id", "secret")},
+		{"WithTokenSource", WithTokenSource(oauth2.StaticTokenSource(&oauth2.Token{}))},
+		{"WithTokenURL", WithTokenURL("https://example.com/token")},
+		{"WithScopes", WithScopes("view-user-profile")},
+		{"WithUserAgent", WithUserAgent("test")},
+		{"WithMaxRetries", WithMaxRetries(5)},
+		{"WithTimeout", WithTimeout(time.Second)},
+		{"WithBaseTransport", WithBaseTransport(http.DefaultTransport)},
+		{"WithLogger", WithLogger(slog.Default())},
+	} {
+		_, err := New(context.Background(), WithHTTPClient(hc), tc.opt)
+		if !errors.Is(err, ErrConflictingOptions) {
+			t.Errorf("New(WithHTTPClient, %s) err = %v, want ErrConflictingOptions", tc.name, err)
+			continue
+		}
+		if !strings.Contains(err.Error(), tc.name) {
+			t.Errorf("error does not name %s: %v", tc.name, err)
+		}
+	}
+}
+
+// WithEndpoint is read outside the transport, so it composes.
+func TestWithHTTPClientAllowsEndpoint(t *testing.T) {
+	client, err := New(context.Background(),
+		WithHTTPClient(&http.Client{}), WithEndpoint(UserEndpoint))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if client.Endpoint() != UserEndpoint {
+		t.Errorf("Endpoint = %q, want %q", client.Endpoint(), UserEndpoint)
 	}
 }
 

@@ -146,27 +146,38 @@ fragment GameZoneSummary on GameZone {
   name
 }
 
-fragment Report on Report {
+fragment GuildSummary on Guild {
+  id
+  name
+}
+
+# The fields a listing needs. Spread this rather than Report where the selection
+# is repeated per row.
+fragment ReportSummary on Report {
   code
   title
   startTime
   endTime
-  visibility
-  revision
-  segments
-  exportedSegments
   # @genqlient(flatten: true)
   zone {
     ...ZoneSummary
   }
+  # @genqlient(flatten: true)
   guild {
-    id
-    name
+    ...GuildSummary
   }
   # @genqlient(flatten: true)
   owner {
     ...User
   }
+}
+
+fragment Report on Report {
+  ...ReportSummary
+  visibility
+  revision
+  segments
+  exportedSegments
   region {
     id
     name
@@ -264,7 +275,7 @@ fragment ReportPage on ReportPagination {
   to
   # @genqlient(flatten: true)
   data {
-    ...Report
+    ...ReportSummary
   }
 }
 
@@ -279,15 +290,20 @@ fragment ReportActor on ReportActor {
   server
 }
 
+fragment ReportAbility on ReportAbility {
+  gameID
+  icon
+  name
+  type
+}
+
 fragment ReportMasterData on ReportMasterData {
   logVersion
   gameVersion
   lang
+  # @genqlient(flatten: true)
   abilities {
-    gameID
-    icon
-    name
-    type
+    ...ReportAbility
   }
   # @genqlient(flatten: true)
   actors {
