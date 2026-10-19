@@ -2994,7 +2994,7 @@ func (v *getReportEventsReportDataReport) GetEvents() getReportEventsReportDataR
 type getReportEventsReportDataReportEventsReportEventPaginator struct {
 	// The list of events obtained.
 	Data json.RawMessage `json:"data"`
-	// A timestamp to pass in as the start time when fetching the next page of data.
+	// A timestamp to pass as startTime for the next page, keeping the other filters and endTime unchanged. Null means the requested range is exhausted. A short or empty page can still have a continuation timestamp; compatible events fields may share it.
 	NextPageTimestamp float64 `json:"nextPageTimestamp"`
 }
 

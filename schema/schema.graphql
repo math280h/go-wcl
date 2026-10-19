@@ -13,180 +13,15 @@ Indicates that an Input Object is a OneOf Input Object (and thus requires exactl
 """
 directive @oneOf on INPUT_OBJECT
 
-type ArchonViewModels {
-	user: JSON
-	userFromDesktopClientToken(
-		desktopClientToken: String!
-	): JSON
-	googleAnalytics: JSON
-	game(
-		buildsZoneTypeSlug: String
-	): JSON
-	translations(
-		keys: [String]
-	): JSON
-	header(
-		gameSlug: String
-		locale: String
-	): JSON
-	headerTitle: JSON
-	footer: JSON
-	indexPage: JSON
-	signInPage: JSON
-	signOutPage: JSON
-	authErrorPage: JSON
-	accountPage: JSON
-	gamePage: JSON
-	contactPage: JSON
-	downloadPage: JSON
-	privacyPolicyPage: JSON
-	videoTermsOfServicePage: JSON
-	aboutPage: JSON
-	announcementPage: JSON
-	gameSlugs: JSON
-	buildsZonePageSlugs: JSON
-	buildsZonePage(
-		gameSlug: String
-		rankingsSlug: String
-		zoneTypeSlug: String
-		difficultySlug: String
-		encounterSlug: String
-		affixesSlug: String
-	): JSON
-	buildsSpecPageSlugs: JSON
-	buildsSpecPage(
-		gameSlug: String
-		classSlug: String
-		specSlug: String
-		zoneTypeSlug: String
-		categorySlug: String
-		difficultySlug: String
-		encounterSlug: String
-		affixesSlug: String
-	): JSON
-	buildsClassesAndSpecsPage(
-		gameSlug: String
-	): JSON
-	ability(
-		id: Int
-	): JSON
-	articleCategory(
-		articleCategorySlug: String
-	): JSON
-	articleCategories: JSON
-	articleSlugs(
-		articleCategorySlug: String
-		siteName: String
-	): JSON
-	article(
-		articleSlug: String
-		articleCategorySlug: String
-		siteName: String
-	): JSON
-	cmsNavigation(
-		currentSlug: String
-	): JSON
-	pageOfArticlePreviews(
-		articleCategorySlug: String
-		pageNumber: Int
-		siteName: String
-	): JSON
-	snippets(
-		snippetSlugs: [String]
-	): JSON
-	articleIndexPage: JSON
-	playwireAds: JSON
-	adPlacements: JSON
-	reportPage(
-		userId: Int
-		gameSlug: String!
-		reportSlug: String!
-	): JSON
-	fightPage(
-		userId: Int
-		gameSlug: String!
-		reportSlug: String!
-		fightSlug: String!
-		categorySlug: String!
-		phaseSlug: String
-		playerSlug: String
-		cutoffSlug: Int
-		throughputSlug: String
-		deathSlug: Int
-		pullSlug: String
-		damageFilterSlug: String
-	): JSON
-	fightPageContent(
-		sectionComponentNames: [String!]!
-		userId: Int
-		gameSlug: String!
-		reportSlug: String!
-		fightSlug: String!
-		categorySlug: String!
-		phaseSlug: String
-		playerSlug: String
-		cutoffSlug: Int
-		throughputSlug: String
-		deathSlug: Int
-		pullSlug: String
-		damageFilterSlug: String
-	): JSON
-	characterIndexPage(
-		userId: Int
-		gameSlug: String!
-		searchTerm: String
-	): JSON
-	characterPage(
-		userId: Int
-		gameSlug: String!
-		characterSlug: String!
-		categorySlug: String!
-		partitionSlug: String
-		metricSlug: String
-		difficultySlug: String
-		sizeSlug: String
-		specSlug: String
-		byBracketSlug: String
-		privateSlug: String
-		loadoutSourceTypeSlug: String
-		loadoutSourceSlug: String
-	): JSON
-	characterPageContent(
-		sectionComponentNames: [String!]!
-		userId: Int
-		gameSlug: String!
-		characterSlug: String!
-		categorySlug: String!
-		partitionSlug: String
-		metricSlug: String
-		difficultySlug: String
-		sizeSlug: String
-		specSlug: String
-		byBracketSlug: String
-		privateSlug: String
-		loadoutSourceTypeSlug: String
-		loadoutSourceSlug: String
-	): JSON
-	characterCustomizationOptions(
-		userId: Int
-		characterSlug: String!
-	): JSON
-	characterEncounterRankings(
-		userId: Int
-		gameSlug: String!
-		characterSlug: String!
-		categorySlug: String!
-		partitionSlug: String
-		metricSlug: String
-		difficultySlug: String
-		sizeSlug: String
-		specSlug: String
-		byBracketSlug: String
-		privateSlug: String
-		aggregateEncounterId: String!
-		showMore: Boolean
-	): JSON
-}
+"""
+Require that all rate limit points spent by this query be user points. The intended use-case is to allow heavy data requests to be implemented with user points only, without developers having to track user quota themselves. If there is no OAuth user, this returns an error. If any non-user points would be spent on a field, that field errors. Note that a 1 point "hold" is always placed on the app key at the start of a request. If the request succeeds or fails with a non-fatal error, that hold is released---but you always need at least 1 app point to make a request.
+"""
+directive @onlySpendUserPoints(
+"""
+Whether the requirement is enabled. Defaults to true if the directive is applied. This field exists to make it easier to toggle.
+"""
+	enabled: Boolean
+) on QUERY
 
 """
 A bracket description for a given raid zone. Brackets have a minimum value, maximum value, and a bucket that can be used to establish all of the possible brackets. The type field indicates what the brackets represent, e.g., item levels or game patches, etc.
@@ -2517,6 +2352,18 @@ The total amount of points spent during this hour.
 The number of seconds remaining until the points reset.
 """
 	pointsResetIn: Int!
+"""
+Point breakdown for the current request.
+
+The "total" field is guaranteed to be set and contains the total application + user points. This field includes the minimum request cost of 1 point. The minimum cost is assigned to the application by default, but is applied to the user if ONLY user points are spent (aka the "application" field is 0) and there is an authenticated user.
+
+The "application" field contains the point count that MUST be assigned to the API key. This field does NOT include the minimum request cost.
+The "user" field contains the point count that MAY be assigned to the User. This field does NOT include the minimum request cost.
+The "database" field contains the amount of application points that are ALSO database points.
+
+Note: user and database point values are visible without opting in to the new system.
+"""
+	currentRequest: JSON!
 }
 
 """
@@ -2628,7 +2475,7 @@ Optional. A filter to only include kills, wipes, encounters or trash.
 """
 		killType: KillType
 """
-Optional. How many events to retrieve. Allowed value ranges are 100-10000. The default value is 300.
+Optional. Requested page size. Defaults to 10000. Timestamp groups are kept intact. Compatible events fields in one query may be combined, so each field can return more or fewer events than requested and share a continuation timestamp. Follow nextPageTimestamp until null, even when data is empty.
 """
 		limit: Int
 """
@@ -3285,7 +3132,7 @@ The list of events obtained.
 """
 	data: JSON
 """
-A timestamp to pass in as the start time when fetching the next page of data.
+A timestamp to pass as startTime for the next page, keeping the other filters and endTime unchanged. Null means the requested range is exhausted. A short or empty page can still have a continuation timestamp; compatible events fields may share it.
 """
 	nextPageTimestamp: Float
 }
@@ -3314,6 +3161,14 @@ The season ID of a Classic fight. Will only be nonzero for Season of Mastery in 
 Whether or not a fight represents an entire raid from start to finish, e.g., in Classic WoW a complete run of Blackwing Lair.
 """
 	completeRaid: Boolean!
+"""
+The enemy forces count reached by the end of a keystone dungeon.
+"""
+	countReached: Int
+"""
+The enemy forces count required to complete a keystone dungeon.
+"""
+	countRequired: Int
 """
 The difficulty setting for the raid, dungeon, or arena. Null for trash.
 """
@@ -3426,6 +3281,10 @@ All the maps that were involved in a fight. For single bosses this will usually 
 The name of the fight.
 """
 	name: String!
+"""
+A mapping from NPC ids to enemy forces count provided on kill.
+"""
+	npcCountMap: JSON
 """
 Some boss fights may be converted to trash fights (encounterID = 0). When this occurs, `originalEncounterID` contains the original ID of the encounter.
 """
@@ -4108,6 +3967,14 @@ The script contents of the component, in JavaScript.
 Whether the component is protected from deletion.
 """
 		protected: Boolean!
+"""
+A short user-facing label for the component, shown e.g. in the video tab labels.
+"""
+		label: String
+"""
+The complete selector set for the component.
+"""
+		selectors: [ReportComponentSelectorInput!]
 	): String!
 """
 Update the script contents of a report component, replacing the old contents. True is returned on success, errors are thrown on failure.
@@ -4146,6 +4013,14 @@ The component's unique key.
 The human-readable name of the component
 """
 	name: String!
+"""
+A short user-facing label for the component, shown e.g. in the video tab labels.
+"""
+	label: String
+"""
+The complete selector set for the component.
+"""
+	selectors: [ReportComponentSelector!]!
 """
 Whether the component is currently protected from deletion.
 """
@@ -4229,6 +4104,31 @@ When evaluated with `debug: True`, this includes the `console.log` output as a s
 The description of the exception the component threw (if it threw one). Note that component failures DO NOT produce standard GraphQL errors.
 """
 	error: String
+}
+
+type ReportComponentSelector {
+	surface: ReportComponentSelectorSurface!
+	areaId: Int
+	seasonId: Int
+	encounterId: Int
+	className: String
+	specName: String
+	difficultyId: Int
+}
+
+input ReportComponentSelectorInput {
+	surface: ReportComponentSelectorSurface!
+	areaId: Int
+	seasonId: Int
+	encounterId: Int
+	className: String
+	specName: String
+	difficultyId: Int
+}
+
+enum ReportComponentSelectorSurface {
+	report
+	video
 }
 
 type Query {
