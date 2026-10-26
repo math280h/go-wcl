@@ -13,180 +13,15 @@ Indicates that an Input Object is a OneOf Input Object (and thus requires exactl
 """
 directive @oneOf on INPUT_OBJECT
 
-type ArchonViewModels {
-	user: JSON
-	userFromDesktopClientToken(
-		desktopClientToken: String!
-	): JSON
-	googleAnalytics: JSON
-	game(
-		buildsZoneTypeSlug: String
-	): JSON
-	translations(
-		keys: [String]
-	): JSON
-	header(
-		gameSlug: String
-		locale: String
-	): JSON
-	headerTitle: JSON
-	footer: JSON
-	indexPage: JSON
-	signInPage: JSON
-	signOutPage: JSON
-	authErrorPage: JSON
-	accountPage: JSON
-	gamePage: JSON
-	contactPage: JSON
-	downloadPage: JSON
-	privacyPolicyPage: JSON
-	videoTermsOfServicePage: JSON
-	aboutPage: JSON
-	announcementPage: JSON
-	gameSlugs: JSON
-	buildsZonePageSlugs: JSON
-	buildsZonePage(
-		gameSlug: String
-		rankingsSlug: String
-		zoneTypeSlug: String
-		difficultySlug: String
-		encounterSlug: String
-		affixesSlug: String
-	): JSON
-	buildsSpecPageSlugs: JSON
-	buildsSpecPage(
-		gameSlug: String
-		classSlug: String
-		specSlug: String
-		zoneTypeSlug: String
-		categorySlug: String
-		difficultySlug: String
-		encounterSlug: String
-		affixesSlug: String
-	): JSON
-	buildsClassesAndSpecsPage(
-		gameSlug: String
-	): JSON
-	ability(
-		id: Int
-	): JSON
-	articleCategory(
-		articleCategorySlug: String
-	): JSON
-	articleCategories: JSON
-	articleSlugs(
-		articleCategorySlug: String
-		siteName: String
-	): JSON
-	article(
-		articleSlug: String
-		articleCategorySlug: String
-		siteName: String
-	): JSON
-	cmsNavigation(
-		currentSlug: String
-	): JSON
-	pageOfArticlePreviews(
-		articleCategorySlug: String
-		pageNumber: Int
-		siteName: String
-	): JSON
-	snippets(
-		snippetSlugs: [String]
-	): JSON
-	articleIndexPage: JSON
-	playwireAds: JSON
-	adPlacements: JSON
-	reportPage(
-		userId: Int
-		gameSlug: String!
-		reportSlug: String!
-	): JSON
-	fightPage(
-		userId: Int
-		gameSlug: String!
-		reportSlug: String!
-		fightSlug: String!
-		categorySlug: String!
-		phaseSlug: String
-		playerSlug: String
-		cutoffSlug: Int
-		throughputSlug: String
-		deathSlug: Int
-		pullSlug: String
-		damageFilterSlug: String
-	): JSON
-	fightPageContent(
-		sectionComponentNames: [String!]!
-		userId: Int
-		gameSlug: String!
-		reportSlug: String!
-		fightSlug: String!
-		categorySlug: String!
-		phaseSlug: String
-		playerSlug: String
-		cutoffSlug: Int
-		throughputSlug: String
-		deathSlug: Int
-		pullSlug: String
-		damageFilterSlug: String
-	): JSON
-	characterIndexPage(
-		userId: Int
-		gameSlug: String!
-		searchTerm: String
-	): JSON
-	characterPage(
-		userId: Int
-		gameSlug: String!
-		characterSlug: String!
-		categorySlug: String!
-		partitionSlug: String
-		metricSlug: String
-		difficultySlug: String
-		sizeSlug: String
-		specSlug: String
-		byBracketSlug: String
-		privateSlug: String
-		loadoutSourceTypeSlug: String
-		loadoutSourceSlug: String
-	): JSON
-	characterPageContent(
-		sectionComponentNames: [String!]!
-		userId: Int
-		gameSlug: String!
-		characterSlug: String!
-		categorySlug: String!
-		partitionSlug: String
-		metricSlug: String
-		difficultySlug: String
-		sizeSlug: String
-		specSlug: String
-		byBracketSlug: String
-		privateSlug: String
-		loadoutSourceTypeSlug: String
-		loadoutSourceSlug: String
-	): JSON
-	characterCustomizationOptions(
-		userId: Int
-		characterSlug: String!
-	): JSON
-	characterEncounterRankings(
-		userId: Int
-		gameSlug: String!
-		characterSlug: String!
-		categorySlug: String!
-		partitionSlug: String
-		metricSlug: String
-		difficultySlug: String
-		sizeSlug: String
-		specSlug: String
-		byBracketSlug: String
-		privateSlug: String
-		aggregateEncounterId: String!
-		showMore: Boolean
-	): JSON
-}
+"""
+Require that all rate limit points spent by this query be user points. The intended use-case is to allow heavy data requests to be implemented with user points only, without developers having to track user quota themselves. If there is no OAuth user, this returns an error. If any non-user points would be spent on a field, that field errors. Note that a 1 point "hold" is always placed on the app key at the start of a request. If the request succeeds or fails with a non-fatal error, that hold is released---but you always need at least 1 app point to make a request.
+"""
+directive @onlySpendUserPoints(
+"""
+Whether the requirement is enabled. Defaults to true if the directive is applied. This field exists to make it easier to toggle.
+"""
+	enabled: Boolean
+) on QUERY
 
 """
 A bracket description for a given raid zone. Brackets have a minimum value, maximum value, and a bucket that can be used to establish all of the possible brackets. The type field indicates what the brackets represent, e.g., item levels or game patches, etc.
@@ -227,7 +62,7 @@ The class id of the character.
 """
 	classID: Int!
 """
-Encounter rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+Encounter rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 """
 	encounterRankings(
 """
@@ -296,7 +131,7 @@ The faction of the character.
 """
 	faction: GameFaction!
 """
-Cached game data such as gear for the character. This data was fetched from the appropriate source (Blizzard APIs for WoW, Lodestone for FF). This call will only return a cached copy of the data if it exists already. It will not go out to Blizzard or Lodestone to fetch a new copy.
+Cached game data such as gear for the character. This data was fetched from the appropriate source (Blizzard APIs for WoW, Lodestone for FF). This call will only return a cached copy of the data if it exists already. It will not go out to Blizzard or Lodestone to fetch a new copy. [User-Eligible Points]
 """
 	gameData(
 """
@@ -333,7 +168,7 @@ The name of the character.
 """
 	name: String!
 """
-Recent reports for the character.
+Recent reports for the character. [Database Points]
 """
 	recentReports(
 """
@@ -350,7 +185,7 @@ The server that the character belongs to.
 """
 	server: Server!
 """
-Rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+Rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 """
 	zoneRankings(
 """
@@ -584,7 +419,7 @@ The CharacterData object enables the retrieval of single characters or filtered 
 """
 type CharacterData {
 """
-Obtain a specific character either by id or by name/server_slug/server_region.
+Obtain a specific character either by id or by name/server_slug/server_region. [User-Eligible Points]
 """
 	character(
 """
@@ -605,7 +440,7 @@ Optional. The region for a specific character. Must be used in conjunction with 
 		serverRegion: String
 	): Character
 """
-A collection of characters for a specific guild.
+A collection of characters for a specific guild. [User-Eligible Points]
 """
 	characters(
 """
@@ -922,7 +757,7 @@ The localized name of the encounter.
 """
 	name: String!
 """
-Player rankings information for a zone. This data is not considered frozen, and it can change without notice. Use at your own risk.
+Player rankings information for a zone. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 """
 	characterRankings(
 """
@@ -1976,6 +1811,9 @@ Threat.
 A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings.
 """
 type Guild {
+"""
+Attendance data for the guild. [User-Eligible Points]
+"""
 	attendance(
 """
 Optional. Whether or not to filter the attendance to a specific guild tag.
@@ -2015,7 +1853,7 @@ The name of the guild.
 """
 	name: String!
 """
-The server that the guild belongs to.
+The server that the guild belongs to. [User-Eligible Points]
 """
 	server: Server!
 """
@@ -2023,11 +1861,11 @@ Whether or not the guild has stealth mode enabled.
 """
 	stealthMode: Boolean!
 """
-The tags used to label reports. In the site UI, these are called raid teams.
+The tags used to label reports. In the site UI, these are called raid teams. [User-Eligible Points]
 """
 	tags: [GuildTag]
 """
-The member roster for a specific guild. The result of this query is a paginated list of characters. This query only works for games where the guild roster is verifiable, e.g., it does not work for Classic Warcraft.
+The member roster for a specific guild. The result of this query is a paginated list of characters. This query only works for games where the guild roster is verifiable, e.g., it does not work for Classic Warcraft. [User-Eligible Points]
 """
 	members(
 """
@@ -2090,7 +1928,7 @@ The GuildData object enables the retrieval of single guilds or filtered collecti
 """
 type GuildData {
 """
-Obtain a specific guild either by id or by name/serverSlug/serverRegion.
+Obtain a specific guild either by id or by name/serverSlug/serverRegion. [User-Eligible Points]
 """
 	guild(
 """
@@ -2146,7 +1984,7 @@ The ID of the tag.
 """
 	id: Int!
 """
-The guild that the tag belongs to.
+The guild that the tag belongs to. [User-Eligible Points]
 """
 	guild: Guild!
 """
@@ -2175,7 +2013,7 @@ A guild's rankings within a zone.
 """
 type GuildZoneRankings {
 """
-The progress ranks for the guild. Always uses the highest difficulty.
+The progress ranks for the guild. Always uses the highest difficulty. [User-Eligible Points]
 """
 	progress(
 """
@@ -2184,7 +2022,7 @@ Raid size. Only used for Classic WoW and certain old Retail WoW zones.
 		size: Int
 	): WorldRegionServerRankPositions
 """
-The all-star based speed rank for the guild.
+The all-star based speed rank for the guild. [User-Eligible Points]
 """
 	speed(
 """
@@ -2197,7 +2035,7 @@ Raid difficulty.
 		difficulty: Int
 	): WorldRegionServerRankPositions
 """
-The complete raid speed ranks for the guild. Most non-Classic WoW zones do not support complete raid ranks.
+The complete raid speed ranks for the guild. Most non-Classic WoW zones do not support complete raid ranks. [User-Eligible Points]
 """
 	completeRaidSpeed(
 """
@@ -2506,17 +2344,45 @@ A way to obtain your current rate limit usage.
 """
 type RateLimitData {
 """
-The total amount of points this API key can spend per hour.
+The total amount of application points this API key can spend per hour.
 """
 	limitPerHour: Int!
 """
-The total amount of points spent during this hour.
+The total amount of application points spent during this hour.
 """
 	pointsSpentThisHour: Float!
 """
 The number of seconds remaining until the points reset.
 """
 	pointsResetIn: Int!
+"""
+Point breakdown for the current request.
+
+The "total" field is guaranteed to be set and contains the total application + user points. This field includes the minimum request cost of 1 point. The minimum cost is assigned to the application by default, but is applied to the user if ONLY user points are spent (aka the "application" field is 0) and there is an authenticated user.
+
+The "application" field contains the point count that MUST be assigned to the API key. This field does NOT include the minimum request cost.
+The "user" field contains the point count that MAY be assigned to the User. This field does NOT include the minimum request cost.
+The "database" field contains the amount of application points that are ALSO database points.
+
+Note: user and database point values are visible without opting in to the new system.
+"""
+	currentRequest: JSON!
+"""
+The total amount of database points this API key can spend per hour. Database points are a type of application point and reset at the same time. Application points spent on fields mark [Database Points] count toward the database point limit. You can still spend application points after running out of database points.
+"""
+	databaseLimitPerHour: Int!
+"""
+The total amount of database points spent during this hour.
+"""
+	databasePointsSpentThisHour: Int!
+"""
+Whether the user has remaining points. User points are treated as an extension of the application's point limit for most purposes and will be preferentially spent on fields marked [User-Eligible Points] when a user is authenticated. The limit on user points is shared across all applications the user authenticates with. This field is null if there is not an authenticated user.
+"""
+	userHasRemainingPoints: Boolean
+"""
+The number of seconds until the user's points reset.
+"""
+	userPointsResetIn: Int
 }
 
 """
@@ -2580,7 +2446,7 @@ The end time of the report. This is a UNIX timestamp representing the timestamp 
 """
 	endTime: Float!
 """
-A set of paginated report events, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+A set of paginated report events, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 """
 	events(
 """
@@ -2628,7 +2494,7 @@ Optional. A filter to only include kills, wipes, encounters or trash.
 """
 		killType: KillType
 """
-Optional. How many events to retrieve. Allowed value ranges are 100-10000. The default value is 300.
+Optional. Requested page size. Defaults to 10000. Timestamp groups are kept intact. Compatible events fields in one query may be combined, so each field can return more or fewer events than requested and share a continuation timestamp. Follow nextPageTimestamp until null, even when data is empty.
 """
 		limit: Int
 """
@@ -2701,7 +2567,7 @@ The number of exported segments in the report. This is how many segments have be
 """
 	exportedSegments: Int!
 """
-A set of fights with details about participating players.
+A set of fights with details about participating players. [User-Eligible Points]
 """
 	fights(
 """
@@ -2726,7 +2592,7 @@ Optional. Whether or not the fight data should be auto-translated. Defaults to t
 		translate: Boolean
 	): [ReportFight]
 """
-A graph of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+A graph of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 """
 	graph(
 """
@@ -2831,19 +2697,19 @@ Optional. The number of deaths after which all subsequent events should be ignor
 		wipeCutoff: Int
 	): JSON
 """
-The guild that the report belongs to. If this is null, then the report was uploaded to the user's personal logs.
+The guild that the report belongs to. If this is null, then the report was uploaded to the user's personal logs. [User-Eligible Points]
 """
 	guild: Guild
 """
-The guild tag that the report belongs to. If this is null, then the report was not tagged.
+The guild tag that the report belongs to. If this is null, then the report was not tagged. [User-Eligible Points]
 """
 	guildTag: GuildTag
 """
-The user that uploaded the report.
+The user that uploaded the report. [User-Eligible Points]
 """
 	owner: User
 """
-Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report.
+Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report. [User-Eligible Points]
 """
 	masterData(
 """
@@ -2852,7 +2718,7 @@ Optional. Whether or not the actors and abilities in the master data should be a
 		translate: Boolean
 	): ReportMasterData
 """
-A table of information for the players of a report, including their specs, talents, gear, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+A table of information for the players of a report, including their specs, talents, gear, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 """
 	playerDetails(
 """
@@ -2893,7 +2759,7 @@ A list of all characters that ranked on kills in the report.
 """
 	rankedCharacters: [Character]
 """
-Rankings information for a report, filterable to specific fights, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+Rankings information for a report, filterable to specific fights, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 """
 	rankings(
 """
@@ -2938,7 +2804,7 @@ The start time of the report. This is a UNIX timestamp representing the timestam
 """
 	startTime: Float!
 """
-A table of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+A table of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 """
 	table(
 """
@@ -3051,7 +2917,7 @@ The visibility level of the report. The possible values are 'public', 'private',
 """
 	visibility: String!
 """
-The principal zone that the report contains fights for. Null if no supported zone exists.
+The principal zone that the report contains fights for. Null if no supported zone exists. [User-Eligible Points]
 """
 	zone: Zone
 """
@@ -3059,7 +2925,7 @@ Whether this report has been archived. Events, tables, and graphs for archived r
 """
 	archiveStatus: ReportArchiveStatus
 """
-Phase information for all boss encounters observed in this report. This requires loading fight data, but does not double-charge API points if you load fights and phases.
+Phase information for all boss encounters observed in this report. This requires loading fight data, but does not double-charge API points if you load fights and phases. [User-Eligible Points]
 """
 	phases: [EncounterPhases!]
 }
@@ -3142,7 +3008,7 @@ Optional. Whether to allow viewing of unlisted logs. If you have a multi-user ap
 		allowUnlisted: Boolean
 	): Report
 """
-A set of reports for a specific guild, guild tag, or user.
+A set of reports for a specific guild, guild tag, or user. [Database Points]
 """
 	reports(
 """
@@ -3285,7 +3151,7 @@ The list of events obtained.
 """
 	data: JSON
 """
-A timestamp to pass in as the start time when fetching the next page of data.
+A timestamp to pass as startTime for the next page, keeping the other filters and endTime unchanged. Null means the requested range is exhausted. A short or empty page can still have a continuation timestamp; compatible events fields may share it.
 """
 	nextPageTimestamp: Float
 }
@@ -3314,6 +3180,14 @@ The season ID of a Classic fight. Will only be nonzero for Season of Mastery in 
 Whether or not a fight represents an entire raid from start to finish, e.g., in Classic WoW a complete run of Blackwing Lair.
 """
 	completeRaid: Boolean!
+"""
+The enemy forces count reached by the end of a keystone dungeon.
+"""
+	countReached: Int
+"""
+The enemy forces count required to complete a keystone dungeon.
+"""
+	countRequired: Int
 """
 The difficulty setting for the raid, dungeon, or arena. Null for trash.
 """
@@ -3427,6 +3301,10 @@ The name of the fight.
 """
 	name: String!
 """
+A mapping from NPC ids to enemy forces count provided on kill.
+"""
+	npcCountMap: JSON
+"""
 Some boss fights may be converted to trash fights (encounterID = 0). When this occurs, `originalEncounterID` contains the original ID of the encounter.
 """
 	originalEncounterID: Int
@@ -3447,7 +3325,7 @@ The start time of the fight. This is a timestamp with millisecond precision that
 """
 	startTime: Float!
 """
-The import/export code for a Retail Dragonflight talent build. Will be null for a classic or pre-Dragonflight fight.
+The import/export code for a Retail Dragonflight talent build. Will be null for a classic or pre-Dragonflight fight. [User-Eligible Points]
 """
 	talentImportCode(
 """
@@ -3689,7 +3567,7 @@ The subregion that this server belongs to.
 """
 	subregion: Subregion!
 """
-The guilds found on this server (and any servers connected to this one.
+The guilds found on this server (and any servers connected to this one). [Database Points]
 """
 	guilds(
 """
@@ -3702,7 +3580,7 @@ Optional. The page of paginated data to retrieve. If omitted, defaults to the fi
 		page: Int
 	): GuildPagination
 """
-The characters found on this server (and any servers connected to this one.
+The characters found on this server (and any servers connected to this one). [Database Points]
 """
 	characters(
 """
@@ -3890,7 +3768,7 @@ The user data object contains basic information about users and lets you retriev
 """
 type UserData {
 """
-Obtain a specific user by id.
+Obtain a specific user by id. [User-Eligible Points]
 """
 	user(
 """
@@ -3899,7 +3777,7 @@ Required. Specify a single user ID to retrieve.
 		id: Int
 	): User
 """
-Obtain the current user (only works with user endpoint).
+Obtain the current user (only works with user endpoint). [User-Eligible Points]
 """
 	currentUser: User
 }
@@ -4108,6 +3986,14 @@ The script contents of the component, in JavaScript.
 Whether the component is protected from deletion.
 """
 		protected: Boolean!
+"""
+A short user-facing label for the component, shown e.g. in the video tab labels.
+"""
+		label: String
+"""
+The complete selector set for the component.
+"""
+		selectors: [ReportComponentSelectorInput!]
 	): String!
 """
 Update the script contents of a report component, replacing the old contents. True is returned on success, errors are thrown on failure.
@@ -4146,6 +4032,14 @@ The component's unique key.
 The human-readable name of the component
 """
 	name: String!
+"""
+A short user-facing label for the component, shown e.g. in the video tab labels.
+"""
+	label: String
+"""
+The complete selector set for the component.
+"""
+	selectors: [ReportComponentSelector!]!
 """
 Whether the component is currently protected from deletion.
 """
@@ -4229,6 +4123,31 @@ When evaluated with `debug: True`, this includes the `console.log` output as a s
 The description of the exception the component threw (if it threw one). Note that component failures DO NOT produce standard GraphQL errors.
 """
 	error: String
+}
+
+type ReportComponentSelector {
+	surface: ReportComponentSelectorSurface!
+	areaId: Int
+	seasonId: Int
+	encounterId: Int
+	className: String
+	specName: String
+	difficultyId: Int
+}
+
+input ReportComponentSelectorInput {
+	surface: ReportComponentSelectorSurface!
+	areaId: Int
+	seasonId: Int
+	encounterId: Int
+	className: String
+	specName: String
+	difficultyId: Int
+}
+
+enum ReportComponentSelectorSurface {
+	report
+	video
 }
 
 type Query {

@@ -664,7 +664,7 @@ type Guild struct {
 	Type int `json:"type"`
 	// The faction of the guild.
 	Faction Faction `json:"faction"`
-	// The server that the guild belongs to.
+	// The server that the guild belongs to. [User-Eligible Points]
 	Server Server `json:"server"`
 }
 
@@ -821,9 +821,9 @@ var AllRankingTimeframeType = []RankingTimeframeType{
 //
 // A way to obtain your current rate limit usage.
 type RateLimit struct {
-	// The total amount of points this API key can spend per hour.
+	// The total amount of application points this API key can spend per hour.
 	LimitPerHour int `json:"limitPerHour"`
-	// The total amount of points spent during this hour.
+	// The total amount of application points spent during this hour.
 	PointsSpentThisHour float64 `json:"pointsSpentThisHour"`
 	// The number of seconds remaining until the points reset.
 	PointsResetIn int `json:"pointsResetIn"`
@@ -1443,11 +1443,11 @@ type ReportSummary struct {
 	StartTime float64 `json:"startTime"`
 	// The end time of the report. This is a UNIX timestamp representing the timestamp of the last event contained in the report.
 	EndTime float64 `json:"endTime"`
-	// The principal zone that the report contains fights for. Null if no supported zone exists.
+	// The principal zone that the report contains fights for. Null if no supported zone exists. [User-Eligible Points]
 	Zone ZoneSummary `json:"zone"`
-	// The guild that the report belongs to. If this is null, then the report was uploaded to the user's personal logs.
+	// The guild that the report belongs to. If this is null, then the report was uploaded to the user's personal logs. [User-Eligible Points]
 	Guild GuildSummary `json:"guild"`
-	// The user that uploaded the report.
+	// The user that uploaded the report. [User-Eligible Points]
 	Owner User `json:"owner"`
 }
 
@@ -2537,7 +2537,7 @@ func (v *getAbilityResponse) GetGameData() getAbilityGameData { return v.GameDat
 //
 // The CharacterData object enables the retrieval of single characters or filtered collections of characters.
 type getCharacterByIDCharacterData struct {
-	// Obtain a specific character either by id or by name/server_slug/server_region.
+	// Obtain a specific character either by id or by name/server_slug/server_region. [User-Eligible Points]
 	Character *Character `json:"character"`
 }
 
@@ -2560,7 +2560,7 @@ func (v *getCharacterByIDResponse) GetCharacterData() getCharacterByIDCharacterD
 //
 // The CharacterData object enables the retrieval of single characters or filtered collections of characters.
 type getCharacterByNameCharacterData struct {
-	// Obtain a specific character either by id or by name/server_slug/server_region.
+	// Obtain a specific character either by id or by name/server_slug/server_region. [User-Eligible Points]
 	Character *Character `json:"character"`
 }
 
@@ -2583,7 +2583,7 @@ func (v *getCharacterByNameResponse) GetCharacterData() getCharacterByNameCharac
 //
 // The CharacterData object enables the retrieval of single characters or filtered collections of characters.
 type getCharacterEncounterRankingsCharacterData struct {
-	// Obtain a specific character either by id or by name/server_slug/server_region.
+	// Obtain a specific character either by id or by name/server_slug/server_region. [User-Eligible Points]
 	Character *getCharacterEncounterRankingsCharacterDataCharacter `json:"character"`
 }
 
@@ -2597,7 +2597,7 @@ func (v *getCharacterEncounterRankingsCharacterData) GetCharacter() *getCharacte
 //
 // A player character. Characters can earn individual rankings and appear in reports.
 type getCharacterEncounterRankingsCharacterDataCharacter struct {
-	// Encounter rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// Encounter rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 	EncounterRankings json.RawMessage `json:"encounterRankings"`
 }
 
@@ -2622,7 +2622,7 @@ func (v *getCharacterEncounterRankingsResponse) GetCharacterData() getCharacterE
 //
 // The CharacterData object enables the retrieval of single characters or filtered collections of characters.
 type getCharacterZoneRankingsCharacterData struct {
-	// Obtain a specific character either by id or by name/server_slug/server_region.
+	// Obtain a specific character either by id or by name/server_slug/server_region. [User-Eligible Points]
 	Character *getCharacterZoneRankingsCharacterDataCharacter `json:"character"`
 }
 
@@ -2636,7 +2636,7 @@ func (v *getCharacterZoneRankingsCharacterData) GetCharacter() *getCharacterZone
 //
 // A player character. Characters can earn individual rankings and appear in reports.
 type getCharacterZoneRankingsCharacterDataCharacter struct {
-	// Rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// Rankings information for a character, filterable to specific zones, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 	ZoneRankings json.RawMessage `json:"zoneRankings"`
 }
 
@@ -2691,7 +2691,7 @@ func (v *getCurrentUserResponse) GetUserData() getCurrentUserUserData { return v
 //
 // The user data object contains basic information about users and lets you retrieve specific users (or the current user if using the user endpoint).
 type getCurrentUserUserData struct {
-	// Obtain the current user (only works with user endpoint).
+	// Obtain the current user (only works with user endpoint). [User-Eligible Points]
 	CurrentUser *CurrentUser `json:"currentUser"`
 }
 
@@ -2728,7 +2728,7 @@ func (v *getEncounterCharacterRankingsWorldData) GetEncounter() *getEncounterCha
 //
 // A single encounter for the game.
 type getEncounterCharacterRankingsWorldDataEncounter struct {
-	// Player rankings information for a zone. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// Player rankings information for a zone. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 	CharacterRankings json.RawMessage `json:"characterRankings"`
 }
 
@@ -2805,7 +2805,7 @@ func (v *getExpansionsWorldData) GetExpansions() []Expansion { return v.Expansio
 //
 // The GuildData object enables the retrieval of single guilds or filtered collections of guilds.
 type getGuildByIDGuildData struct {
-	// Obtain a specific guild either by id or by name/serverSlug/serverRegion.
+	// Obtain a specific guild either by id or by name/serverSlug/serverRegion. [User-Eligible Points]
 	Guild *Guild `json:"guild"`
 }
 
@@ -2826,7 +2826,7 @@ func (v *getGuildByIDResponse) GetGuildData() getGuildByIDGuildData { return v.G
 //
 // The GuildData object enables the retrieval of single guilds or filtered collections of guilds.
 type getGuildByNameGuildData struct {
-	// Obtain a specific guild either by id or by name/serverSlug/serverRegion.
+	// Obtain a specific guild either by id or by name/serverSlug/serverRegion. [User-Eligible Points]
 	Guild *Guild `json:"guild"`
 }
 
@@ -2931,7 +2931,7 @@ func (v *getReportActorsReportData) GetReport() *getReportActorsReportDataReport
 //
 // A single report uploaded by a player to a guild or personal logs.
 type getReportActorsReportDataReport struct {
-	// Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report.
+	// Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report. [User-Eligible Points]
 	MasterData getReportActorsReportDataReportMasterData `json:"masterData"`
 }
 
@@ -2978,7 +2978,7 @@ func (v *getReportEventsReportData) GetReport() *getReportEventsReportDataReport
 //
 // A single report uploaded by a player to a guild or personal logs.
 type getReportEventsReportDataReport struct {
-	// A set of paginated report events, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// A set of paginated report events, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 	Events getReportEventsReportDataReportEventsReportEventPaginator `json:"events"`
 }
 
@@ -2994,7 +2994,7 @@ func (v *getReportEventsReportDataReport) GetEvents() getReportEventsReportDataR
 type getReportEventsReportDataReportEventsReportEventPaginator struct {
 	// The list of events obtained.
 	Data json.RawMessage `json:"data"`
-	// A timestamp to pass in as the start time when fetching the next page of data.
+	// A timestamp to pass as startTime for the next page, keeping the other filters and endTime unchanged. Null means the requested range is exhausted. A short or empty page can still have a continuation timestamp; compatible events fields may share it.
 	NextPageTimestamp float64 `json:"nextPageTimestamp"`
 }
 
@@ -3034,7 +3034,7 @@ func (v *getReportGraphReportData) GetReport() *getReportGraphReportDataReport {
 //
 // A single report uploaded by a player to a guild or personal logs.
 type getReportGraphReportDataReport struct {
-	// A graph of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// A graph of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 	Graph json.RawMessage `json:"graph"`
 }
 
@@ -3069,7 +3069,7 @@ func (v *getReportMasterDataReportData) GetReport() *getReportMasterDataReportDa
 //
 // A single report uploaded by a player to a guild or personal logs.
 type getReportMasterDataReportDataReport struct {
-	// Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report.
+	// Data from the report's master file. This includes version info, all of the players, NPCs and pets that occur in the report, and all the game abilities used in the report. [User-Eligible Points]
 	MasterData ReportMasterData `json:"masterData"`
 }
 
@@ -3106,7 +3106,7 @@ func (v *getReportPlayerDetailsReportData) GetReport() *getReportPlayerDetailsRe
 //
 // A single report uploaded by a player to a guild or personal logs.
 type getReportPlayerDetailsReportDataReport struct {
-	// A table of information for the players of a report, including their specs, talents, gear, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// A table of information for the players of a report, including their specs, talents, gear, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 	PlayerDetails json.RawMessage `json:"playerDetails"`
 }
 
@@ -3143,7 +3143,7 @@ func (v *getReportRankingsReportData) GetReport() *getReportRankingsReportDataRe
 //
 // A single report uploaded by a player to a guild or personal logs.
 type getReportRankingsReportDataReport struct {
-	// Rankings information for a report, filterable to specific fights, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// Rankings information for a report, filterable to specific fights, bosses, metrics, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [Database Points]
 	Rankings json.RawMessage `json:"rankings"`
 }
 
@@ -3197,7 +3197,7 @@ func (v *getReportTableReportData) GetReport() *getReportTableReportDataReport {
 //
 // A single report uploaded by a player to a guild or personal logs.
 type getReportTableReportDataReport struct {
-	// A table of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk.
+	// A table of information for a report, filterable via arguments like type, source, target, ability, etc. This data is not considered frozen, and it can change without notice. Use at your own risk. [User-Eligible Points]
 	Table json.RawMessage `json:"table"`
 }
 
@@ -3233,9 +3233,9 @@ func (v *getReportWithFightsReportData) GetReport() *getReportWithFightsReportDa
 // A single report uploaded by a player to a guild or personal logs.
 type getReportWithFightsReportDataReport struct {
 	Report `json:"-"`
-	// A set of fights with details about participating players.
+	// A set of fights with details about participating players. [User-Eligible Points]
 	Fights []ReportFight `json:"fights"`
-	// Phase information for all boss encounters observed in this report. This requires loading fight data, but does not double-charge API points if you load fights and phases.
+	// Phase information for all boss encounters observed in this report. This requires loading fight data, but does not double-charge API points if you load fights and phases. [User-Eligible Points]
 	Phases []EncounterPhases `json:"phases"`
 }
 
@@ -3398,7 +3398,7 @@ func (v *getReportWithFightsResponse) GetReportData() getReportWithFightsReportD
 //
 // The ReportData object enables the retrieval of single reports or filtered collections of reports.
 type getReportsReportData struct {
-	// A set of reports for a specific guild, guild tag, or user.
+	// A set of reports for a specific guild, guild tag, or user. [Database Points]
 	Reports ReportPage `json:"reports"`
 }
 
@@ -3470,7 +3470,7 @@ func (v *getUserResponse) GetUserData() getUserUserData { return v.UserData }
 //
 // The user data object contains basic information about users and lets you retrieve specific users (or the current user if using the user endpoint).
 type getUserUserData struct {
-	// Obtain a specific user by id.
+	// Obtain a specific user by id. [User-Eligible Points]
 	User *User `json:"user"`
 }
 
